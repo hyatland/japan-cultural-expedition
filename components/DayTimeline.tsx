@@ -128,7 +128,7 @@ const EditRow: React.FC<EditRowProps> = ({
     />
     <button onClick={onSave} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all shrink-0"><Check size={13} /></button>
     <button onClick={onCancel} className="p-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shrink-0"><X size={13} /></button>
-    <button onClick={onDelete} className="p-1.5 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-800/50 transition-all shrink-0"><Trash2 size={13} /></button>
+    <button onClick={onDelete} className="p-1.5 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-200 dark:hover:bg-orange-800/50 transition-all shrink-0"><Trash2 size={13} /></button>
   </div>
 );
 
@@ -374,17 +374,17 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities
             <div key={`arrive-${evtIdx}`} className="flex items-stretch gap-0">
               <div className="w-14 shrink-0 flex flex-col items-end pr-3 pt-2.5">
                 {evt.time && (
-                  <span className="text-[11px] font-black tabular-nums text-red-600 dark:text-red-400 leading-none">
+                  <span className="text-[11px] font-black tabular-nums text-orange-600 dark:text-orange-400 leading-none">
                     {evt.time}
                   </span>
                 )}
               </div>
               <div className="flex flex-col items-center w-5 shrink-0">
-                <div className="mt-2.5 w-2.5 h-2.5 rounded-full shrink-0 z-10 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] ring-2 ring-white dark:ring-slate-900" />
-                {!isLast && <div className="flex-1 w-px bg-gradient-to-b from-red-400/40 dark:from-red-600/40 to-slate-200/20 dark:to-slate-800/20 mt-1" />}
+                <div className="mt-2.5 w-2.5 h-2.5 rounded-full shrink-0 z-10 bg-orange-500 shadow-[0_0_8px_rgba(234,88,12,0.8)] ring-2 ring-white dark:ring-slate-900" />
+                {!isLast && <div className="flex-1 w-px bg-gradient-to-b from-orange-400/40 dark:from-orange-600/40 to-slate-200/20 dark:to-slate-800/20 mt-1" />}
               </div>
-              <div className="flex-1 mb-1.5 ml-2 text-[11px] bg-red-50 dark:bg-red-950/30 px-3 py-2 rounded-lg border border-red-200 dark:border-red-800/30">
-                <div className="flex items-center gap-1.5 text-red-700 dark:text-red-400 font-bold">
+              <div className="flex-1 mb-1.5 ml-2 text-[11px] bg-orange-50 dark:bg-orange-950/30 px-3 py-2 rounded-lg border border-orange-200 dark:border-orange-800/30">
+                <div className="flex items-center gap-1.5 text-orange-700 dark:text-orange-400 font-bold">
                   <MapPin size={11} />
                   <span>Arrive{evt.station ? ` · ${evt.station}` : ''}</span>
                 </div>
@@ -495,7 +495,7 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities
                     />
                     <button onClick={saveEdit} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all shrink-0"><Check size={13} /></button>
                     <button onClick={cancelEdit} className="p-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shrink-0"><X size={13} /></button>
-                    <button onClick={() => deleteActivity(actIdx)} className="p-1.5 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-800/50 transition-all shrink-0"><Trash2 size={13} /></button>
+                    <button onClick={() => deleteActivity(actIdx)} className="p-1.5 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-200 dark:hover:bg-orange-800/50 transition-all shrink-0"><Trash2 size={13} /></button>
                   </div>
                 ) : (
                   <div

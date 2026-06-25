@@ -32,11 +32,11 @@ const Legend = () => {
     { label: 'Station', color: 'bg-[#60a5fa]' },
   ];
   const routes = [
-    { label: 'Standard Route', color: 'bg-[#ef4444]', dashed: false },
+    { label: 'Standard Route', color: 'bg-[#ea580c]', dashed: false },
     { label: 'Mountain Route', color: 'bg-[#facc15]', dashed: true },
   ];
   return (
-    <div className="hidden sm:block absolute bottom-10 left-10 z-10 bg-white dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-2xl pointer-events-auto max-w-[200px]">
+    <div className="hidden sm:block absolute bottom-10 left-10 z-10 bg-white dark:bg-[#111]/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl pointer-events-auto max-w-[200px]">
       <div className="flex items-center gap-2 mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
         <Layers size={14} className="text-blue-500" />
         <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Legend</span>
@@ -218,33 +218,33 @@ const App: React.FC = () => {
       )}
 
       {/* ─── Sidebar ─── */}
-      <div className={`fixed lg:relative inset-x-0 bottom-0 lg:inset-auto w-full lg:w-[420px] bg-slate-100 dark:bg-slate-900 shadow-2xl flex flex-col z-40 border-r border-slate-200 dark:border-slate-800 shrink-0 transition-transform duration-500 ease-in-out h-[90svh] lg:h-full ${
+      <div className={`fixed lg:relative inset-x-0 bottom-0 lg:inset-auto w-full lg:w-[420px] bg-slate-100 dark:bg-[#111] shadow-2xl flex flex-col z-40 border-r border-slate-200 dark:border-white/5 shrink-0 transition-transform duration-500 ease-in-out h-[90svh] lg:h-full ${
         isMobile ? (isSidebarExpanded ? 'translate-y-0' : 'translate-y-[calc(90svh-120px)]') : 'translate-y-0'
       }`}>
         {/* Header */}
         <div
           onClick={isMobile ? () => setIsSidebarExpanded(!isSidebarExpanded) : undefined}
-          className="p-6 lg:p-8 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 cursor-pointer lg:cursor-default shrink-0 flex items-center justify-between"
+          className="p-6 lg:p-8 bg-white dark:bg-[#0a0a0a] border-b border-slate-200 dark:border-white/5 cursor-pointer lg:cursor-default shrink-0 flex items-center justify-between"
         >
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tighter text-slate-950 dark:text-white uppercase">
-              JAPAN <span className="text-red-500">EXPEDITION</span>
+              JAPAN <span className="text-orange-500">EXPEDITION</span>
             </h1>
             <p className="text-slate-500 dark:text-slate-500 text-[9px] lg:text-[10px] mt-1 uppercase tracking-[0.3em] font-bold flex items-center gap-2">
-              <Compass size={14} className="text-red-500" />
+              <Compass size={14} className="text-orange-500" />
               July 2026 · {days.length} Days · {companions.length > 0 ? `${companions.length} Traveler${companions.length > 1 ? 's' : ''}` : 'Solo Journey'}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className="bg-slate-200 dark:bg-slate-800 p-2 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+              className="bg-slate-200 dark:bg-white/10 p-2 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/20 transition-colors"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             {isMobile && (
-              <div className="bg-slate-200 dark:bg-slate-800 p-2 rounded-full text-slate-600 dark:text-slate-400">
+              <div className="bg-slate-200 dark:bg-white/10 p-2 rounded-full text-slate-600 dark:text-slate-400">
                 {isSidebarExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
               </div>
             )}
@@ -252,7 +252,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Timeline */}
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5 bg-slate-100 dark:bg-slate-900">
+        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5 bg-slate-100 dark:bg-[#111]">
           {days.map((day, idx) => (
             <div
               key={`${day.dayNum}-${day.title}`}
@@ -261,12 +261,12 @@ const App: React.FC = () => {
               onDragOver={(e) => handleDragOver(e, idx)}
               onDrop={() => handleDrop(idx)}
               onDragEnd={handleDragEnd}
-              className={`transition-all duration-150 ${dragOverIdx === idx && dragIdx !== idx ? 'border-t-2 border-red-500 pt-0.5' : ''} ${dragIdx === idx ? 'opacity-40 scale-95' : ''}`}
+              className={`transition-all duration-150 ${dragOverIdx === idx && dragIdx !== idx ? 'border-t-2 border-orange-500 pt-0.5' : ''} ${dragIdx === idx ? 'opacity-40 scale-95' : ''}`}
             >
               <div className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-all border flex items-center gap-2 group cursor-pointer ${
                 selectedDayNum === day.dayNum
-                  ? 'bg-white dark:bg-slate-800 border-red-300 dark:border-red-600/50 shadow-sm'
-                  : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  ? 'bg-white dark:bg-[#1e1e1e] border-orange-300 dark:border-orange-600/50 shadow-sm'
+                  : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
               }`}>
                 {/* Drag handle */}
                 <div className="shrink-0 text-slate-300 dark:text-slate-700 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
@@ -277,7 +277,7 @@ const App: React.FC = () => {
                   <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-black ${
                     day.isHighland
                       ? (selectedDayNum === day.dayNum ? 'bg-yellow-500 text-slate-950' : 'bg-yellow-100 dark:bg-slate-800 text-yellow-600 dark:text-yellow-500')
-                      : (selectedDayNum === day.dayNum ? 'bg-red-600 text-white' : 'bg-red-100 dark:bg-slate-800 text-red-600 dark:text-red-500')
+                      : (selectedDayNum === day.dayNum ? 'bg-orange-600 text-white' : 'bg-orange-100 dark:bg-white/10 text-orange-600 dark:text-orange-400')
                   }`}>
                     {day.dayNum}
                   </span>
@@ -307,7 +307,7 @@ const App: React.FC = () => {
                 >
                   <Pencil size={11} />
                 </button>
-                {selectedDayNum === day.dayNum && <ChevronRight className="text-red-500 shrink-0" size={14} />}
+                {selectedDayNum === day.dayNum && <ChevronRight className="text-orange-500 shrink-0" size={14} />}
               </div>
             </div>
           ))}
@@ -377,7 +377,7 @@ const App: React.FC = () => {
               onClick={() => setIsCardMinimized(v => !v)}
             >
               {/* Day badge */}
-              <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black text-white ${selectedDay.isHighland ? 'bg-yellow-500' : 'bg-red-600'}`}>
+              <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black text-white ${selectedDay.isHighland ? 'bg-yellow-500' : 'bg-orange-600'}`}>
                 {selectedDay.dayNum}
               </div>
 
@@ -445,11 +445,11 @@ const App: React.FC = () => {
                         </div>
                         <div className="space-y-2">
                           <p className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                            <Compass size={13} className="text-red-500" /> Transport
+                            <Compass size={13} className="text-orange-500" /> Transport
                           </p>
                           <div className="flex flex-wrap gap-1.5">
                             {selectedDay.routeOptions.map((opt, i) => (
-                              <span key={i} className="bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-red-300 dark:border-red-500/20">{opt}</span>
+                              <span key={i} className="bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-orange-300 dark:border-orange-500/20">{opt}</span>
                             ))}
                           </div>
                         </div>
@@ -530,7 +530,7 @@ const App: React.FC = () => {
                                 {selectedDay.checkOutTime && (
                                   <div className="flex-1 text-center">
                                     <p className="text-[8px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest">Check-out</p>
-                                    <p className="text-sm font-black text-red-600 dark:text-red-400">{selectedDay.checkOutTime}</p>
+                                    <p className="text-sm font-black text-orange-600 dark:text-orange-400">{selectedDay.checkOutTime}</p>
                                   </div>
                                 )}
                               </div>

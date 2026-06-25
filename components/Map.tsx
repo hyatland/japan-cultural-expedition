@@ -56,7 +56,7 @@ const Map: React.FC<MapProps> = ({ days, selectedDay, onSelectDay, companions })
 
       if (validPoints.length >= 2) {
         const path = L.polyline(validPoints, {
-          color: day.isHighland ? '#facc15' : '#ef4444',
+          color: day.isHighland ? '#facc15' : '#ea580c',
           weight: isSelected ? 8 : 4,
           opacity: isSelected ? 1 : 0.4,
           dashArray: day.isHighland ? '10, 15' : undefined,
@@ -85,7 +85,7 @@ const Map: React.FC<MapProps> = ({ days, selectedDay, onSelectDay, companions })
             const arrow = L.marker(mid, {
               icon: L.divIcon({
                 className: 'direction-arrow',
-                html: `<div style="transform: rotate(${bearing}deg); color: ${day.isHighland ? '#facc15' : '#ef4444'}; font-size: 20px; font-weight: bold; text-shadow: 0 0 5px rgba(0,0,0,0.8)">➤</div>`,
+                html: `<div style="transform: rotate(${bearing}deg); color: ${day.isHighland ? '#facc15' : '#ea580c'}; font-size: 20px; font-weight: bold; text-shadow: 0 0 5px rgba(0,0,0,0.8)">➤</div>`,
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
               }),

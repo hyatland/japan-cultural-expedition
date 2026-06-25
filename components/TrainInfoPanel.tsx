@@ -92,7 +92,7 @@ const TrainInfoPanel: React.FC<TrainInfoPanelProps> = ({
             onChange={(e) => onTimingChange('arrivalTime', e.target.value)}
             className="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-1.5 py-0.5 text-slate-800 dark:text-slate-200 text-[11px] w-[80px] focus:ring-1 focus:ring-emerald-500/50 outline-none"
           />
-          <Clock size={12} className="text-red-500 dark:text-red-400" />
+          <Clock size={12} className="text-orange-500 dark:text-orange-400" />
         </div>
       </div>
 
@@ -232,7 +232,7 @@ const TrainInfoPanel: React.FC<TrainInfoPanelProps> = ({
             <div className="flex items-center gap-1">
               <span className="font-semibold text-slate-700 dark:text-slate-300">{trainInfo!.arrivalStation}</span>
               {trainInfo!.arrivalTime && <span className="text-slate-500">{trainInfo!.arrivalTime}</span>}
-              <MapPin size={10} className="text-red-500 dark:text-red-400" />
+              <MapPin size={10} className="text-orange-500 dark:text-orange-400" />
             </div>
           </div>
         </div>
