@@ -1,0 +1,604 @@
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { JAPAN_ITINERARY, DEFAULT_COMPANIONS } from './constants';
+import { ItineraryDay, Companion, POI, TrainInfo, Activity } from './types';
+import Map from './components/Map';
+import CompanionManager from './components/CompanionManager';
+import TrainInfoPanel from './components/TrainInfoPanel';
+import POIToggleList from './components/POIToggleList';
+import EditDayModal from './components/EditDayModal';
+import DayTimeline from './components/DayTimeline';
+import PackingList from './components/PackingList';
+import PrintView from './components/PrintView';
+import { fetchNearbyPOIs } from './services/overpassService';
+import { useTheme } from './ThemeContext';
+import {
+  Calendar, MapPin, Bed, ChevronRight, Compass,
+  Zap, Waves, Layers, ChevronUp, ChevronDown,
+  Maximize2, Minimize2, GripVertical, AlertTriangle, Pencil,
+  Ticket, ExternalLink, Moon, Sun, Printer, ShoppingBag,
+} from 'lucide-react';
+
+// ─── Legend ───
+const Legend = () => {
+  const categories = [
+    { label: 'Temple', color: 'bg-[#f87171]' },
+    { label: 'Shrine', color: 'bg-[#fb923c]' },
+    { label: 'Garden', color: 'bg-[#4ade80]' },
+    { label: 'Town', color: 'bg-[#818cf8]' },
+    { label: 'Hot Spring', color: 'bg-[#38bdf8]' },
+    { label: 'Museum', color: 'bg-[#fbbf24]' },
+    { label: 'Market', color: 'bg-[#34d399]' },
+    { label: 'Station', color: 'bg-[#60a5fa]' },
+  ];
+  const routes = [
+    { label: 'Standard Route', color: 'bg-[#ef4444]', dashed: false },
+    { label: 'Mountain Route', color: 'bg-[#facc15]', dashed: true },
+  ];
+  return (
+    <div className="hidden sm:block absolute bottom-10 left-10 z-10 bg-white dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-2xl pointer-events-auto max-w-[200px]">
+      <div className="flex items-center gap-2 mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
+        <Layers size={14} className="text-blue-500" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Legend</span>
+      </div>
+      <div className="space-y-3">
+        <div>
+          <p className="text-[9px] font-bold text-slate-500 dark:text-slate-500 uppercase mb-2">Destinations</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {categories.map(cat => (
+              <div key={cat.label} className="flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full shrink-0 ${cat.color}`} />
+                <span className="text-[10px] text-slate-700 dark:text-slate-300">{cat.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+          <p className="text-[9px] font-bold text-slate-500 dark:text-slate-500 uppercase mb-2">Routes</p>
+          <div className="space-y-1.5">
+            {routes.map(r => (
+              <div key={r.label} className="flex items-center gap-2">
+                <div className={`h-1 flex-1 min-w-[24px] rounded-full ${r.color}`} style={r.dashed ? { backgroundImage: 'repeating-linear-gradient(90deg,transparent,transparent 4px,#020617 4px,#020617 8px)' } : {}} />
+                <span className="text-[10px] text-slate-700 dark:text-slate-300">{r.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── App ───
+const App: React.FC = () => {
+  const { toggleTheme, theme } = useTheme();
+  const [days, setDays] = useState<ItineraryDay[]>(JAPAN_ITINERARY);
+  const [companions, setCompanions] = useState<Companion[]>(DEFAULT_COMPANIONS);
+  const [selectedDayNum, setSelectedDayNum] = useState<number | null>(JAPAN_ITINERARY[0].dayNum);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isDetailExpanded, setIsDetailExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [editingDay, setEditingDay] = useState<ItineraryDay | null>(null);
+
+  // Drag & drop
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Overpass suggestions
+  const [suggestedPois, setSuggestedPois] = useState<POI[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+
+  // Day plan view mode
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('timeline');
+
+  // Main content view
+  const [mainView, setMainView] = useState<'map' | 'packing' | 'print'>('map');
+
+  // Switch view and close any open edit drawer
+  const switchView = (v: 'map' | 'packing' | 'print') => {
+    setEditingDay(null);
+    setMainView(v);
+  };
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const selectedDay = days.find(d => d.dayNum === selectedDayNum) || days[0];
+
+  const handleDaySelect = (dayNum: number) => {
+    setSelectedDayNum(dayNum);
+    setSuggestedPois([]);
+    if (isMobile) { setIsSidebarExpanded(false); setIsDetailExpanded(false); }
+  };
+
+  // ─── Drag & Drop ───
+  const handleDragStart = (idx: number) => setDragIdx(idx);
+  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setDragOverIdx(idx); };
+  const handleDrop = (dropIdx: number) => {
+    if (dragIdx === null || dragIdx === dropIdx) { setDragIdx(null); setDragOverIdx(null); return; }
+    const reordered = [...days];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.splice(dropIdx, 0, moved);
+    const renumbered = reordered.map((day, i) => ({ ...day, dayNum: i + 1 }));
+    setDays(renumbered);
+    setSelectedDayNum(renumbered[dropIdx].dayNum);
+    setDragIdx(null);
+    setDragOverIdx(null);
+  };
+  const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
+
+  // ─── Edit Day ───
+  const handleSaveDay = useCallback((updated: ItineraryDay) => {
+    setDays(prev => prev.map(d => d.dayNum === updated.dayNum ? updated : d));
+    setEditingDay(null);
+  }, []);
+
+  // ─── Companions ───
+  const handleDayCompanionsChange = useCallback((ids: string[]) => {
+    setDays(prev => prev.map(d => d.dayNum === selectedDayNum ? { ...d, companionIds: ids } : d));
+  }, [selectedDayNum]);
+
+  // ─── Train Info ───
+  const handleTrainInfoChange = useCallback((info: TrainInfo) => {
+    setDays(prev => prev.map(d => d.dayNum === selectedDayNum ? { ...d, trainInfo: info } : d));
+  }, [selectedDayNum]);
+
+  const handleTimingChange = useCallback((field: 'departureTime' | 'arrivalTime', value: string) => {
+    setDays(prev => prev.map(d => {
+      if (d.dayNum !== selectedDayNum) return d;
+      const updated = { ...d, [field]: value };
+      if (updated.departureTime && updated.arrivalTime) {
+        const [dH, dM] = updated.departureTime.split(':').map(Number);
+        const [aH, aM] = updated.arrivalTime.split(':').map(Number);
+        const dep = dH * 60 + dM, arr = aH * 60 + aM;
+        updated.travelDurationMinutes = arr >= dep ? arr - dep : (1440 - dep) + arr;
+      }
+      return updated;
+    }));
+  }, [selectedDayNum]);
+
+  // ─── POIs ───
+  const handleTogglePoi = useCallback((poiId: string) => {
+    setDays(prev => prev.map(d => {
+      if (d.dayNum !== selectedDayNum) return d;
+      return { ...d, pois: d.pois.map(p => p.id === poiId ? { ...p, enabled: !p.enabled } : p) };
+    }));
+  }, [selectedDayNum]);
+
+  const handleAddPoi = useCallback((poi: POI) => {
+    setDays(prev => prev.map(d => {
+      if (d.dayNum !== selectedDayNum) return d;
+      if (d.pois.find(p => p.id === poi.id)) return d;
+      return { ...d, pois: [...d.pois, { ...poi, enabled: true }] };
+    }));
+    setSuggestedPois(prev => prev.filter(p => p.id !== poi.id));
+  }, [selectedDayNum]);
+
+  const handleRemovePoi = useCallback((poiId: string) => {
+    setDays(prev => prev.map(d => {
+      if (d.dayNum !== selectedDayNum) return d;
+      return { ...d, pois: d.pois.filter(p => p.id !== poiId) };
+    }));
+  }, [selectedDayNum]);
+
+  const handleUpdateActivities = useCallback((activities: Activity[]) => {
+    setDays(prev => prev.map(d =>
+      d.dayNum === selectedDayNum ? { ...d, activities } : d
+    ));
+  }, [selectedDayNum]);
+
+  const handleSearchNearby = useCallback(async () => {
+    const day = days.find(d => d.dayNum === selectedDayNum);
+    if (!day || !day.routeCoords[0]) return;
+    setIsLoadingSuggestions(true);
+    const center = day.routeCoords[day.routeCoords.length > 1 ? 1 : 0];
+    const results = await fetchNearbyPOIs(center, 4000, day.pois.map(p => p.name));
+    setSuggestedPois(results);
+    setIsLoadingSuggestions(false);
+  }, [days, selectedDayNum]);
+
+  return (
+    <div className="flex flex-col lg:flex-row h-[100svh] w-full bg-white dark:bg-slate-950 text-slate-950 dark:text-slate-100 overflow-hidden">
+
+      {/* ─── Edit Modal ─── */}
+      {editingDay && (
+        <EditDayModal
+          day={editingDay}
+          onSave={handleSaveDay}
+          onClose={() => setEditingDay(null)}
+        />
+      )}
+
+      {/* ─── Sidebar ─── */}
+      <div className={`fixed lg:relative inset-x-0 bottom-0 lg:inset-auto w-full lg:w-[420px] bg-slate-100 dark:bg-slate-900 shadow-2xl flex flex-col z-40 border-r border-slate-200 dark:border-slate-800 shrink-0 transition-transform duration-500 ease-in-out h-[90svh] lg:h-full ${
+        isMobile ? (isSidebarExpanded ? 'translate-y-0' : 'translate-y-[calc(90svh-120px)]') : 'translate-y-0'
+      }`}>
+        {/* Header */}
+        <div
+          onClick={isMobile ? () => setIsSidebarExpanded(!isSidebarExpanded) : undefined}
+          className="p-6 lg:p-8 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 cursor-pointer lg:cursor-default shrink-0 flex items-center justify-between"
+        >
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-black tracking-tighter text-slate-950 dark:text-white uppercase">
+              JAPAN <span className="text-red-500">EXPEDITION</span>
+            </h1>
+            <p className="text-slate-500 dark:text-slate-500 text-[9px] lg:text-[10px] mt-1 uppercase tracking-[0.3em] font-bold flex items-center gap-2">
+              <Compass size={14} className="text-red-500" />
+              July 2026 · {days.length} Days · {companions.length > 0 ? `${companions.length} Traveler${companions.length > 1 ? 's' : ''}` : 'Solo Journey'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="bg-slate-200 dark:bg-slate-800 p-2 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            {isMobile && (
+              <div className="bg-slate-200 dark:bg-slate-800 p-2 rounded-full text-slate-600 dark:text-slate-400">
+                {isSidebarExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5 bg-slate-100 dark:bg-slate-900">
+          {days.map((day, idx) => (
+            <div
+              key={`${day.dayNum}-${day.title}`}
+              draggable
+              onDragStart={() => handleDragStart(idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDrop={() => handleDrop(idx)}
+              onDragEnd={handleDragEnd}
+              className={`transition-all duration-150 ${dragOverIdx === idx && dragIdx !== idx ? 'border-t-2 border-red-500 pt-0.5' : ''} ${dragIdx === idx ? 'opacity-40 scale-95' : ''}`}
+            >
+              <div className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-all border flex items-center gap-2 group cursor-pointer ${
+                selectedDayNum === day.dayNum
+                  ? 'bg-white dark:bg-slate-800 border-red-300 dark:border-red-600/50 shadow-sm'
+                  : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              }`}>
+                {/* Drag handle */}
+                <div className="shrink-0 text-slate-300 dark:text-slate-700 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+                  <GripVertical size={12} />
+                </div>
+                {/* Day number badge */}
+                <button onClick={() => handleDaySelect(day.dayNum)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
+                  <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-black ${
+                    day.isHighland
+                      ? (selectedDayNum === day.dayNum ? 'bg-yellow-500 text-slate-950' : 'bg-yellow-100 dark:bg-slate-800 text-yellow-600 dark:text-yellow-500')
+                      : (selectedDayNum === day.dayNum ? 'bg-red-600 text-white' : 'bg-red-100 dark:bg-slate-800 text-red-600 dark:text-red-500')
+                  }`}>
+                    {day.dayNum}
+                  </span>
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    <h3 className={`font-semibold truncate text-[13px] ${selectedDayNum === day.dayNum ? 'text-slate-950 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                      {day.title}
+                    </h3>
+                    {day.companionIds.length > 0 && (
+                      <div className="flex -space-x-1 shrink-0">
+                        {companions.filter(c => day.companionIds.includes(c.id)).slice(0, 3).map(c => (
+                          <div key={c.id} className="w-3.5 h-3.5 rounded-full text-[6px] flex items-center justify-center border border-white dark:border-slate-900" style={{ backgroundColor: c.color }}>
+                            {c.avatar}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-500 font-mono tabular-nums">
+                    {day.date}
+                  </span>
+                </button>
+                {/* Edit button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingDay(day); }}
+                  className="shrink-0 p-1 rounded text-slate-400 dark:text-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all opacity-0 group-hover:opacity-100"
+                  title="Edit this day"
+                >
+                  <Pencil size={11} />
+                </button>
+                {selectedDayNum === day.dayNum && <ChevronRight className="text-red-500 shrink-0" size={14} />}
+              </div>
+            </div>
+          ))}
+          <div className="h-20 lg:hidden" />
+        </div>
+      </div>
+
+      {/* ─── Main Content ─── */}
+      <div className="flex-1 relative flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
+
+        {/* Print overlay */}
+        {mainView === 'print' && (
+          <PrintView days={days} companions={companions} onClose={() => switchView('map')} />
+        )}
+
+        {/* Packing list panel */}
+        {mainView === 'packing' && (
+          <div className="absolute inset-0 z-40 bg-white dark:bg-slate-900 overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+              <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                <ShoppingBag size={14} className="text-blue-500" />
+                PACKING LIST
+              </div>
+              <button
+                onClick={() => switchView('map')}
+                className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                ← Back to Map
+              </button>
+            </div>
+            <PackingList />
+          </div>
+        )}
+
+        {/* Tab bar */}
+        <div className="absolute top-4 right-4 lg:right-6 z-30 flex items-center gap-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-700/50 p-1 shadow-lg pointer-events-auto">
+          <button
+            onClick={() => switchView('map')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${mainView === 'map' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+          >
+            <MapPin size={12} /> Map
+          </button>
+          <button
+            onClick={() => switchView('packing')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${mainView === 'packing' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+          >
+            <ShoppingBag size={12} /> Packing
+          </button>
+          <button
+            onClick={() => switchView('print')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${mainView === 'print' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+          >
+            <Printer size={12} /> Print
+          </button>
+        </div>
+
+        {/* Detail Card — only visible on map view */}
+        <div className={`absolute top-4 lg:top-6 left-4 lg:left-6 right-4 lg:right-56 pointer-events-none z-20 transition-all duration-500 ${
+          mainView !== 'map' ? 'opacity-0 pointer-events-none' : (isMobile && isSidebarExpanded ? 'opacity-0 scale-95' : 'opacity-100 scale-100')
+        }`}>
+          <div
+            className={`bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[1.5rem] lg:rounded-[2rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.6)] border border-slate-200 dark:border-slate-700/50 max-w-4xl pointer-events-auto transition-all duration-500 flex flex-col overflow-hidden ${
+              isMobile ? (isDetailExpanded ? 'h-[calc(100svh-120px-3rem)]' : 'h-auto max-h-[100px]') : 'h-auto max-h-[85vh]'
+            }`}
+          >
+            {/* Detail Header */}
+            <div
+              onClick={isMobile ? () => setIsDetailExpanded(!isDetailExpanded) : undefined}
+              className={`p-4 lg:p-6 shrink-0 flex items-start justify-between ${isMobile ? 'cursor-pointer' : ''}`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[9px] font-bold px-2 py-1 rounded-md border border-slate-300 dark:border-slate-700 flex items-center gap-1">
+                    <Calendar size={11} /> {selectedDay.date}
+                  </span>
+                  {selectedDay.isHighland && (
+                    <span className="bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-500 text-[9px] font-black uppercase px-2 py-1 rounded-md border border-yellow-300 dark:border-yellow-500/30 flex items-center gap-1">
+                      <AlertTriangle size={11} /> Mountain
+                    </span>
+                  )}
+                  {selectedDay.companionIds.length === 0 && (
+                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 text-[9px] font-bold px-2 py-1 rounded-md">Solo</span>
+                  )}
+                </div>
+                <h2 className="text-lg lg:text-2xl font-black text-slate-950 dark:text-white leading-tight tracking-tight truncate">
+                  {selectedDay.title}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                {/* Edit button in detail header */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingDay(selectedDay); }}
+                  className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-all border border-slate-300 dark:border-slate-700/50"
+                  title="Edit this day"
+                >
+                  <Pencil size={12} /> Edit
+                </button>
+                {isMobile && (
+                  <div className="text-slate-500 dark:text-slate-400 p-1">
+                    {isDetailExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className={`flex-1 overflow-y-auto px-4 pb-4 lg:px-6 lg:pb-6 transition-opacity duration-300 ${isMobile && !isDetailExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+              <div className="space-y-4 lg:space-y-5">
+
+                {/* Train & Timing */}
+                <TrainInfoPanel
+                  trainInfo={selectedDay.trainInfo}
+                  onTrainInfoChange={handleTrainInfoChange}
+                  departureTime={selectedDay.departureTime}
+                  arrivalTime={selectedDay.arrivalTime}
+                  travelDurationMinutes={selectedDay.travelDurationMinutes}
+                  onTimingChange={handleTimingChange}
+                />
+
+                {/* Two-col layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+                  <div className="lg:col-span-2 space-y-4">
+                    {/* Terrain & Transport */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                          <Zap size={13} className="text-yellow-500" /> Terrain
+                        </p>
+                        <div className="bg-slate-200 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-300 dark:border-slate-700/30">
+                          <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed italic">"{selectedDay.terrain}"</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                          <Compass size={13} className="text-red-500" /> Transport
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedDay.routeOptions.map((opt, i) => (
+                            <span key={i} className="bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-red-300 dark:border-red-500/20">{opt}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Day Plan — List / Timeline */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                          <Waves size={13} className="text-blue-400" /> Day Plan
+                        </p>
+                        <div className="flex items-center bg-slate-200 dark:bg-slate-800 rounded-lg p-0.5 gap-0.5">
+                          <button
+                            onClick={() => setViewMode('list')}
+                            className={`px-2.5 py-1 rounded-md text-[9px] font-bold transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow' : 'text-slate-600 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300'}`}
+                          >
+                            List
+                          </button>
+                          <button
+                            onClick={() => setViewMode('timeline')}
+                            className={`px-2.5 py-1 rounded-md text-[9px] font-bold transition-all ${viewMode === 'timeline' ? 'bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow' : 'text-slate-600 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300'}`}
+                          >
+                            Timeline
+                          </button>
+                        </div>
+                      </div>
+                      <DayTimeline
+                        key={selectedDay.dayNum}
+                        day={selectedDay}
+                        mode={viewMode}
+                        onUpdateActivities={handleUpdateActivities}
+                      />
+                    </div>
+
+                    {/* POI Toggle */}
+                    <POIToggleList
+                      pois={selectedDay.pois}
+                      onTogglePoi={handleTogglePoi}
+                      onAddPoi={handleAddPoi}
+                      onRemovePoi={handleRemovePoi}
+                      suggestedPois={suggestedPois}
+                      isLoadingSuggestions={isLoadingSuggestions}
+                      onSearchNearby={handleSearchNearby}
+                    />
+                  </div>
+
+                  {/* Right column */}
+                  <div className="space-y-4 lg:border-l lg:border-slate-200 dark:lg:border-slate-800 lg:pl-6">
+                    <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-500/10 rounded-lg">
+                          <Bed size={16} className="text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[8px] text-slate-600 dark:text-slate-500 uppercase font-black tracking-widest">Base Camp</p>
+                          <p className="text-xs font-bold text-slate-950 dark:text-white truncate">{selectedDay.sleep}</p>
+                        </div>
+                      </div>
+
+                      {/* Booking Reference */}
+                      {(selectedDay.bookingRef || selectedDay.bookingUrl || selectedDay.checkInTime || selectedDay.checkOutTime) ? (
+                        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                          <div className="flex items-center gap-1.5">
+                            <Ticket size={11} className="text-orange-500 dark:text-orange-400 shrink-0" />
+                            <span className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest">Booking</span>
+                          </div>
+
+                          {/* Check-in / Check-out row */}
+                          {(selectedDay.checkInTime || selectedDay.checkOutTime) && (
+                            <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800/60 rounded-lg px-3 py-2">
+                              {selectedDay.checkInTime && (
+                                <div className="flex-1 text-center">
+                                  <p className="text-[8px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest">Check-in</p>
+                                  <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{selectedDay.checkInTime}</p>
+                                </div>
+                              )}
+                              {selectedDay.checkInTime && selectedDay.checkOutTime && (
+                                <div className="w-px h-6 bg-slate-300 dark:bg-slate-700" />
+                              )}
+                              {selectedDay.checkOutTime && (
+                                <div className="flex-1 text-center">
+                                  <p className="text-[8px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest">Check-out</p>
+                                  <p className="text-sm font-black text-red-600 dark:text-red-400">{selectedDay.checkOutTime}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedDay.bookingRef && (
+                            <p className="text-[11px] font-bold text-orange-600 dark:text-orange-300 font-mono tracking-wide">
+                              # {selectedDay.bookingRef}
+                            </p>
+                          )}
+                          {selectedDay.bookingNote && (
+                            <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-snug">{selectedDay.bookingNote}</p>
+                          )}
+                          {selectedDay.bookingUrl && (
+                            <a
+                              href={selectedDay.bookingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors group"
+                            >
+                              <ExternalLink size={12} className="group-hover:scale-110 transition-transform" />
+                              View Booking
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingDay(selectedDay); }}
+                          className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 w-full flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-600 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                        >
+                          <Ticket size={11} />
+                          Add booking reference
+                        </button>
+                      )}
+                    </div>
+
+                    <CompanionManager
+                      companions={companions}
+                      onCompanionsChange={setCompanions}
+                      dayCompanionIds={selectedDay.companionIds}
+                      onDayCompanionsChange={handleDayCompanionsChange}
+                      dayNum={selectedDay.dayNum}
+                    />
+
+                    <div className="p-3 bg-yellow-100 dark:bg-yellow-500/5 rounded-xl border border-yellow-300 dark:border-yellow-500/10">
+                      <p className="text-[10px] text-yellow-700 dark:text-yellow-500/70 font-bold uppercase mb-1">Travel Tip</p>
+                      <p className="text-[11px] text-yellow-800 dark:text-slate-400 leading-relaxed">
+                        Get a <b>Suica/Pasmo</b> card for seamless transit. July is humid — stay hydrated!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <Legend />
+
+        {/* Map */}
+        <div className="flex-1">
+          <Map
+            days={days}
+            selectedDay={selectedDayNum}
+            onSelectDay={handleDaySelect}
+            companions={companions}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;

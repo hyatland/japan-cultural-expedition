@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Japan 2026">
+  <meta name="theme-color" content="#0f172a">
+  <title>Japan Expedition 2026</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #263348;
+      --border: #334155;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #f97316;
+      --accent2: #fb923c;
+      --green: #22c55e;
+      --blue: #38bdf8;
+      --purple: #a78bfa;
+      --pink: #f472b6;
+      --teal: #2dd4bf;
+      --r: 14px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, 'SF Pro Display', BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15,23,42,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: calc(var(--safe-top) + 12px) 16px 12px;
+    }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .jp-flag { font-size: 22px; }
+
+    /* ── Filter tabs ── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      flex-shrink: 0;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* ── Main list ── */
+    .list { padding: 12px 16px calc(var(--safe-bottom) + 80px); display: flex; flex-direction: column; gap: 12px; }
+
+    /* ── Day card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .card.open { border-color: var(--accent); }
+
+    .card-header {
+      display: flex;
+      align-items: stretch;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      min-height: 72px;
+    }
+    .day-badge {
+      width: 52px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      gap: 1px;
+    }
+    .day-badge .num { font-size: 20px; font-weight: 800; line-height: 1; color: white; }
+    .day-badge .lbl { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .card-meta { flex: 1; padding: 10px 12px; min-width: 0; }
+    .card-date { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .card-title { font-size: 15px; font-weight: 700; line-height: 1.3; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-where { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-sleep-badge { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 11px; color: var(--blue); }
+
+    .chevron { flex-shrink: 0; display: flex; align-items: center; padding: 0 12px; color: var(--muted); transition: transform 0.25s; font-size: 14px; }
+    .card.open .chevron { transform: rotate(90deg); }
+
+    /* ── Card body ── */
+    .card-body { display: none; border-top: 1px solid var(--border); }
+    .card.open .card-body { display: block; }
+
+    .section { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .section:last-child { border-bottom: none; }
+    .section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* Activities */
+    .act-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+    .act-item { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; }
+    .act-dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-top: 6px; }
+
+    /* Transport pill */
+    .transport-card {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .transport-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .transport-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+    .transport-name { font-weight: 600; color: var(--text); }
+    .transport-route { color: var(--muted); font-size: 11px; }
+    .transport-time { margin-left: auto; font-size: 11px; background: rgba(249,115,22,0.15); color: var(--accent); padding: 2px 7px; border-radius: 6px; font-weight: 600; flex-shrink: 0; }
+    .transport-duration { font-size: 11px; color: var(--teal); }
+
+    /* Hotel */
+    .hotel-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .hotel-icon { font-size: 18px; }
+    .hotel-name { font-weight: 600; line-height: 1.3; }
+
+    /* Tags */
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      padding: 3px 9px; border-radius: 8px; font-size: 11px; font-weight: 600;
+      background: rgba(148,163,184,0.12); color: var(--muted);
+    }
+    .tag.highland { background: rgba(167,139,250,0.15); color: var(--purple); }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      background: rgba(15,23,42,0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 8px 0 calc(var(--safe-bottom) + 4px);
+      z-index: 100;
+    }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--muted); font-size: 10px; font-weight: 500; cursor: pointer; padding: 4px 16px; }
+    .nav-btn .nav-icon { font-size: 20px; }
+    .nav-btn.active { color: var(--accent); }
+
+    /* ── Progress bar ── */
+    .progress-header {
+      padding: 10px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .progress-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; display: flex; justify-content: space-between; }
+    .progress-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--pink)); border-radius: 2px; transition: width 0.5s ease; }
+
+    /* ── Info page ── */
+    .info-page { padding: 20px 16px calc(var(--safe-bottom) + 80px); display: none; }
+    .info-page.active { display: block; }
+    .info-card { background: var(--surface); border-radius: var(--r); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+    .info-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
+    .info-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .key { color: var(--muted); width: 90px; flex-shrink: 0; font-size: 12px; }
+
+    /* Search */
+    .search-wrap { position: relative; margin: 10px 16px 0; }
+    .search-input {
+      width: 100%; padding: 9px 12px 9px 36px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 14px;
+      outline: none; -webkit-appearance: none;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--muted); pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<div id="app-itinerary">
+  <div class="header">
+    <div class="header-inner">
+      <div>
+        <h1>Japan Expedition <span class="jp-flag">🇯🇵</span></h1>
+        <div class="header-sub">July 4–19, 2026 · 16 Days</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-align:right">YATO<br>NYC → Tokyo</div>
+    </div>
+  </div>
+
+  <div class="progress-header">
+    <div class="progress-label">
+      <span>Trip Progress</span>
+      <span id="progress-text">Day 1 of 16</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:6.25%"></div></div>
+  </div>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="search" placeholder="Search days, places, hotels…" id="search-input" oninput="filterDays()">
+  </div>
+
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All Days</button>
+    <button class="filter-btn" onclick="setFilter('highland',this)">🏔 Highland</button>
+    <button class="filter-btn" onclick="setFilter('onsen',this)">♨️ Onsen</button>
+    <button class="filter-btn" onclick="setFilter('solo',this)">🧍 Solo</button>
+    <button class="filter-btn" onclick="setFilter('kay',this)">👥 With Kay</button>
+    <button class="filter-btn" onclick="setFilter('brother',this)">👨‍👦 Brother</button>
+    <button class="filter-btn" onclick="setFilter('travel',this)">🚄 Travel Days</button>
+  </div>
+
+  <div class="list" id="day-list"></div>
+</div>
+
+<div id="app-info" style="display:none">
+  <div class="header">
+    <div class="header-inner">
+      <div><h1>Trip Info 📋</h1><div class="header-sub">Hotels, transit & key details</div></div>
+    </div>
+  </div>
+  <div class="info-page active">
+    <div class="info-card">
+      <h3>🏨 Hotels Booked</h3>
+      <div class="info-row"><span class="key">Jul 4–5</span><span>Pearl Star Atami</span></div>
+      <div class="info-row"><span class="key">Jul 5–8</span><span>With Kay (TBD)</span></div>
+      <div class="info-row"><span class="key">Jul 8–10</span><span>Ocean and Forest, Yakushima</span></div>
+      <div class="info-row"><span class="key">Jul 10–11</span><span>Wataya Besso Ryokan, Ureshino</span></div>
+      <div class="info-row"><span class="key">Jul 12–13</span><span>Dormy Inn Takamatsuchuokoenmae</span></div>
+      <div class="info-row"><span class="key">Jul 13–15</span><span>Suimeikan, Gero Onsen ✅</span></div>
+      <div class="info-row"><span class="key">Jul 15–16</span><span>Super Hotel Premier Kanazawaeki ✅</span></div>
+      <div class="info-row"><span class="key">Jul 16–17</span><span>With Brother (TBD)</span></div>
+      <div class="info-row"><span class="key">Jul 18–19</span><span>Asyl Hotel Tokyo Kamata</span></div>
+    </div>
+
+    <div class="info-card">
+      <h3>✈️ Flights</h3>
+      <div class="info-row"><span class="key">Arrival</span><span>Jul 4, 3:30 PM — Haneda (HND)</span></div>
+      <div class="info-row"><span class="key">Departure</span><span>Jul 19, 10:45 PM — Narita → NYC</span></div>
+    </div>
+
+    <div class="info-card">
+      <h3>🚌 Key Transit</h3>
+      <div class="info-row"><span class="key">Jul 5</span><span>Nozomi → Hakata → Iizuka (6 hrs)</span></div>
+      <div class="info-row"><span class="key">Jul 8</span><span>JR → Kagoshima → Toppy Ferry (3–4 hrs)</span></div>
+      <div class="info-row"><span class="key">Jul 11</span><span>Ureshino → Nagasaki 8 AM → Hakata → Takamatsu</span></div>
+      <div class="info-row"><span class="key">Jul 13</span><span>Marine Liner → Nozomi → JR Hida → Gero (5.5 hrs)</span></div>
+      <div class="info-row"><span class="key">Jul 15</span><span>JR Hida → Takayama → Bus Shirakawa-go → Bus Kanazawa</span></div>
+      <div class="info-row"><span class="key">Jul 16</span><span>Bus/JR to Komatsu Airport (40 min)</span></div>
+      <div class="info-row"><span class="key">Jul 18</span><span>Hokuriku Shinkansen → Kamata (2.5 hrs)</span></div>
+    </div>
+
+    <div class="info-card">
+      <h3>💡 Tips</h3>
+      <div class="info-row"><span class="key">IC Card</span><span>Buy Suica at Haneda on arrival — covers all transit</span></div>
+      <div class="info-row"><span class="key">Ferry</span><span>Book Toppy Yakushima ferry in advance (fills up)</span></div>
+      <div class="info-row"><span class="key">Shirakawa</span><span>Only ~3 hrs there — castle ruins viewpoint is a must</span></div>
+      <div class="info-row"><span class="key">Toyosu</span><span>Book tuna auction 1 month ahead (free, limited slots)</span></div>
+      <div class="info-row"><span class="key">Gero→Kan</span><span>Depart 9 AM: JR Hida to Takayama, then Nohhi bus to Shirakawa-go, then Hokutetsu bus to Kanazawa</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-itinerary" onclick="showTab('itinerary')">
+    <span class="nav-icon">📅</span>Itinerary
+  </button>
+  <button class="nav-btn" id="nav-info" onclick="showTab('info')">
+    <span class="nav-icon">📋</span>Info
+  </button>
+</div>
+
+<script>
+const DAYS = [
+  {
+    num: 1, date: "Jul 4", title: "Arrival → Atami", where: "Haneda → Atami",
+    sleep: "Pearl Star Atami", tags: ["arrival"],
+    transit: { name: "Odoriko / Shinkansen", from: "Haneda", to: "Atami", depart: "16:30", arrive: "18:00", mins: 90 },
+    activities: [
+      "3:30 PM: Arrive at Haneda (HND) — clear customs and pick up Suica IC card at airport",
+      "Catch Odoriko Express from Shinagawa → Atami (~90 min, scenic coastal run)",
+      "Check into Pearl Star Atami — enjoy rooftop onsen with sea views",
+      "Evening stroll along Atami's seafront promenade and Atami Ginza",
+      "Dinner at a harborside seafood restaurant — try Atami's famous abalone and kamaboko"
+    ]
+  },
+  {
+    num: 2, date: "Jul 5", title: "Atami → Iizuka (with Kay)", where: "Iizuka, Fukuoka",
+    sleep: "With Kay (TBD)", tags: ["travel","kay"],
+    transit: { name: "Nozomi + JR Kagoshima", from: "Atami", to: "Iizuka", depart: "09:00", arrive: "15:00", mins: 360 },
+    activities: [
+      "9:00 AM: Nozomi Shinkansen from Atami — long but smooth ride through Kyushu",
+      "Transfer at Hakata Station and catch JR Kagoshima Line to Iizuka (~40 min)",
+      "Arrive and meet Kay in Iizuka — drop bags, breathe, explore",
+      "Stroll through Honmachi Shotengai arcade — local snacks and drinks",
+      "Wind down at Uchino Onsen after 6 hrs of travel"
+    ]
+  },
+  {
+    num: 3, date: "Jul 6", title: "Iizuka → Hakata with Kay", where: "Hakata, Fukuoka",
+    sleep: "With Kay (TBD)", tags: ["kay"],
+    transit: { name: "JR Kagoshima Line", from: "Iizuka", to: "Hakata", depart: "10:00", arrive: "10:40", mins: 40 },
+    activities: [
+      "Morning: JR Kagoshima Line from Iizuka → Hakata (40 min)",
+      "Kushida Shrine — Hakata's guardian shrine, home of the giant Gion Yamakasa float",
+      "Hakata Machiya Folk Museum — traditional townhouse life in old Fukuoka",
+      "Lunch at Nakasu yatai food stalls along the Naka River — ramen, yakitori, sake",
+      "Ohori Park walk — lakeside paths perfect for an afternoon wander",
+      "Hakata Ramen dinner at Shin-Shin or Ippudo Watanabe Dori flagship",
+      "Evening drinks in Daimyo or Tenjin nightlife district"
+    ]
+  },
+  {
+    num: 4, date: "Jul 7", title: "Hakata → Iizuka (Pre-Yakushima)", where: "Iizuka, Fukuoka",
+    sleep: "With Kay (TBD)", tags: ["kay"],
+    transit: { name: "JR Kagoshima Line", from: "Hakata", to: "Iizuka", depart: "09:00", arrive: "09:40", mins: 40 },
+    activities: [
+      "Morning: JR Kagoshima Line back to Iizuka (40 min)",
+      "Kaho Theater — stunning Taisho-era playhouse, beautifully restored",
+      "Pack and organize hiking kit for Yakushima (layers, rain gear, trail snacks)",
+      "Stock up on supplies at Iizuka Honmachi Shotengai",
+      "Early dinner, early night — ferry departure is tomorrow morning"
+    ]
+  },
+  {
+    num: 5, date: "Jul 8", title: "Iizuka → Yakushima", where: "Yakushima Island",
+    sleep: "Ocean and Forest", tags: ["travel","onsen"],
+    transit: { name: "Toppy Hydrofoil Ferry", from: "Kagoshima", to: "Yakushima", depart: "13:30", arrive: "15:30", mins: 120 },
+    activities: [
+      "10:00 AM: Depart Iizuka — JR Kagoshima Line to Kagoshima Central (3–4 hrs)",
+      "1:30 PM: Board Toppy hydrofoil ferry from Kagoshima Honko",
+      "3:30 PM: Arrive at Miyanoura Port, Yakushima — check into Ocean and Forest",
+      "Sunset walk on the rocky southern coastline — listen for deer",
+      "Dinner at the hotel: fresh Yakushima flying fish (tobiuo) and mountain vegetables"
+    ]
+  },
+  {
+    num: 6, date: "Jul 9", title: "Ancient Cedars of Yakushima", where: "Yakushima Island",
+    sleep: "Ocean and Forest", tags: ["highland","onsen"],
+    activities: [
+      "6:00 AM: Bus to Shiratani Unsuikyo — the mossy forest that inspired Princess Mononoke",
+      "Hike the main Shiratani Unsuikyo trail (4–5 hrs) — ancient cedar groves, river crossings",
+      "Spot wild Yakushima deer and Japanese macaques on the trail",
+      "Optional detour: Yakusugi Land for easier cedar trails at 1,000m elevation",
+      "Afternoon swim at Isso Beach or cool off under Yunogo Waterfall",
+      "Evening: Soak in Onoaida Onsen — a natural seaside pool carved into coastal rock"
+    ]
+  },
+  {
+    num: 7, date: "Jul 10", title: "Yakushima → Ureshino Onsen", where: "Ureshino, Saga Prefecture",
+    sleep: "Wataya Besso (Ryokan)", tags: ["travel","onsen"],
+    transit: { name: "Toppy Ferry", from: "Yakushima", to: "Kagoshima", depart: "10:30", arrive: "12:30", mins: 120 },
+    activities: [
+      "10:30 AM: Toppy Ferry from Yakushima Miyanoura → Kagoshima (~2 hrs)",
+      "JR / Express Bus from Kagoshima toward Ureshino via Saga",
+      "Check into Wataya Besso Ryokan — one of Japan's oldest and most famous hot spring inns",
+      "Soak in Ureshino's famous silky alkaline waters — said to visibly soften skin",
+      "Multi-course kaiseki dinner, beautifully plated with local Ureshino green tea",
+      "Morning bonus: Walk through Ureshino's rolling tea fields at dawn"
+    ]
+  },
+  {
+    num: 8, date: "Jul 11", title: "Nagasaki Day Visit → Takamatsu", where: "Nagasaki → Hakata → Takamatsu",
+    sleep: "Dormy Inn Takamatsuchuokoenmae", tags: ["travel","solo"],
+    transit: { name: "Bus/JR + Marine Liner", from: "Ureshino", to: "Takamatsu (via Nagasaki)", depart: "08:00", arrive: "23:00", mins: 900 },
+    activities: [
+      "8:00 AM: Check out of Wataya Besso — squeeze in one last morning soak",
+      "Bus/JR to Nagasaki (~1 hr) — stow bags at station lockers",
+      "Nagasaki Peace Memorial Museum — deeply moving, allow 1.5–2 hours",
+      "Walk through Nagasaki Peace Park and the iconic bronze peace statue",
+      "Quick lunch: champon noodles at Ringer Hut or Hamakatsu near Chinatown",
+      "Glover Garden — Meiji-era mansions with sweeping harbour views",
+      "Afternoon: Head toward Hakata Station and connect toward Takamatsu",
+      "Late evening: Check into Dormy Inn Takamatsu"
+    ]
+  },
+  {
+    num: 9, date: "Jul 12", title: "Takamatsu — Gardens & Udon", where: "Takamatsu, Kagawa",
+    sleep: "Dormy Inn Takamatsuchuokoenmae", tags: ["solo"],
+    activities: [
+      "Morning: Ritsurin Garden — one of Japan's finest strolling gardens (open 7 AM)",
+      "Tea ceremony at Kikugetsu-tei teahouse inside the garden",
+      "Sanuki udon brunch at Yamada-ya or Udon-jizo — chewy, dashi-rich, unforgettable",
+      "Afternoon: Takamatsu Sunport waterfront and Tamamo Park seaside walk",
+      "Explore Marugame-machi Shotengai arcade — coffee, crafts, local bakeries",
+      "Dinner at a quiet izakaya — grilled octopus and local Kagawa sake"
+    ]
+  },
+  {
+    num: 10, date: "Jul 13", title: "Takamatsu → Gero Onsen", where: "Gero Onsen, Gifu Prefecture",
+    sleep: "Suimeikan", tags: ["travel","solo","onsen"],
+    transit: { name: "Marine Liner + Nozomi + JR Hida", from: "Takamatsu", to: "Gero", depart: "09:00", arrive: "14:30", mins: 330 },
+    activities: [
+      "9:00 AM: Check out Dormy Inn, board Marine Liner from Takamatsu → Okayama (55 min)",
+      "Nozomi Shinkansen from Okayama → Nagoya (~50 min)",
+      "JR Hida Line: Nagoya → Gero (~1 hr 30 min) — the mountains close in around you",
+      "Arrive Gero Onsen ~2:30 PM — check into Suimeikan Ryokan",
+      "First soak in Suimeikan's open-air rotenburo overlooking the Hida River",
+      "Ryokan kaiseki dinner — seasonal Hida mountain cuisine, delicately presented"
+    ]
+  },
+  {
+    num: 11, date: "Jul 14", title: "Gero Onsen — Suimeikan Day", where: "Gero Onsen, Gifu Prefecture",
+    sleep: "Suimeikan", tags: ["solo","onsen"],
+    activities: [
+      "Morning: Long soak in Suimeikan's outdoor rotenburo — mist rises off the Hida River at dawn",
+      "Explore Gero town — free ashiyu footbaths scattered throughout the streets",
+      "Gero Onsen Gassho Village — wander through relocated thatched farmhouses",
+      "Onsen-manju (hot spring buns) and local sake from riverside shops",
+      "Afternoon nap, evening kaiseki dinner — then back into the baths under the stars",
+      "Pack tonight for tomorrow's 9 AM departure to Shirakawa-go"
+    ]
+  },
+  {
+    num: 12, date: "Jul 15", title: "Gero → Shirakawa-go → Kanazawa", where: "Shirakawa-go → Kanazawa",
+    sleep: "Super Hotel Premier Kanazawaeki Higashiguchi", tags: ["travel","solo","highland"],
+    transit: { name: "JR Hida + Nohhi Bus + Hokutetsu Bus", from: "Gero", to: "Kanazawa (via Shirakawa-go)", depart: "09:00", arrive: "16:00", mins: 420 },
+    activities: [
+      "9:00 AM: Check out of Suimeikan, catch JR Hida toward Takayama (~40 min)",
+      "Nohhi Bus from Takayama → Shirakawa-go (~50 min) — arrive mid-morning",
+      "Wander Ogimachi village — UNESCO gassho-zukuri thatched farmhouses in a mountain valley",
+      "Climb to Ogimachi Castle Ruins viewpoint — quintessential Shirakawa-go panorama",
+      "Lunch: Hida beef or sansai mountain vegetable dishes in the village",
+      "Hokutetsu Bus: Shirakawa-go → Kanazawa (~1 hr 15 min, depart ~1:00 PM)",
+      "Check into Super Hotel Premier Kanazawaeki Higashiguchi"
+    ]
+  },
+  {
+    num: 13, date: "Jul 16", title: "Kanazawa → Brother at Komatsu Airport", where: "Kanazawa / Komatsu",
+    sleep: "With Brother (TBD)", tags: ["brother"],
+    transit: { name: "Hokuriku Tetsu Bus / JR", from: "Kanazawa", to: "Komatsu Airport", depart: "10:00", arrive: "10:40", mins: 40 },
+    activities: [
+      "Morning: Omicho Market stroll and Kenroku-en — make the most of Kanazawa before pickup",
+      "Hokuriku Tetsu Bus or JR to Komatsu Airport to meet brother (40 min)",
+      "Return to Kanazawa together — first stop: Higashi Chaya geisha district",
+      "21st Century Museum of Contemporary Art — the famous swimming pool illusion",
+      "Omakase sushi dinner to celebrate — Kanazawa's sushi rivals Tokyo"
+    ]
+  },
+  {
+    num: 14, date: "Jul 17", title: "Kanazawa with Brother", where: "Kanazawa",
+    sleep: "With Brother (TBD)", tags: ["brother"],
+    activities: [
+      "7:00 AM: Omicho Market — arrive early for fresh crab, uni, and sea bream",
+      "Nagamachi Samurai District — clay-walled lanes and preserved residences",
+      "Gold-leaf craft workshop in Higashi Chaya — try applying gold leaf yourself",
+      "Kanazawa Castle Park walk — expansive grounds with reconstructed turrets",
+      "Afternoon: Izakaya crawl through Katamachi and Korinbo",
+      "Late evening: Kanazawa jazz bar scene — the city has an unlikely but excellent jazz culture"
+    ]
+  },
+  {
+    num: 15, date: "Jul 18", title: "Kanazawa → Tokyo Kamata", where: "Kamata, Tokyo (Ota Ward)",
+    sleep: "Asyl Hotel Tokyo Kamata", tags: ["travel","brother"],
+    transit: { name: "Hokuriku + Tokaido Shinkansen", from: "Kanazawa", to: "Kamata, Tokyo", depart: "09:00", arrive: "13:00", mins: 240 },
+    activities: [
+      "Morning: Head to Kanazawa Station, board Hokuriku Shinkansen toward Tokyo (2 hrs 30 min)",
+      "Connect at Tokyo/Shinagawa → Keikyu Line to Kamata (~15 min)",
+      "Check into Asyl Hotel Tokyo Kamata — Haneda Airport is literally 2 stops away",
+      "Explore Kamata Shotengai — covered shopping arcade with real old-school Tokyo neighbourhood feel",
+      "Organise luggage, pack souvenirs, prepare for tomorrow's airport run",
+      "Farewell dinner at a neighbourhood izakaya — cold Sapporo, yakitori, final kanpai"
+    ]
+  },
+  {
+    num: 16, date: "Jul 19", title: "Sayonara Tokyo → NYC", where: "Tokyo / Narita Airport",
+    sleep: "In-flight / NYC", tags: ["travel"],
+    transit: { name: "Narita Express", from: "Tokyo", to: "Narita Airport", depart: "19:30", arrive: "20:30", mins: 60 },
+    activities: [
+      "5:00 AM: Toyosu Market — book tuna auction viewing 1 month ahead (free, limited)",
+      "Sushi breakfast at Sushi Dai or Sushi Zanmai inside Toyosu",
+      "Last-minute Shibuya or Shinjuku shopping — Tokyu Hands, Don Quijote for final gifts",
+      "2 stops from Kamata: Keikyu to Haneda — fast and stress-free airport access",
+      "10:45 PM: Flight departs for NYC — sayonara, Japan! 🇯🇵"
+    ]
+  }
+];
+
+const SLEEP_ICONS = {
+  "Pearl Star Atami": "🏨",
+  "With Kay (TBD)": "👥",
+  "Ocean and Forest": "🌊",
+  "Wataya Besso (Ryokan)": "♨️",
+  "Dormy Inn Takamatsuchuokoenmae": "🏨",
+  "Suimeikan": "♨️",
+  "Super Hotel Premier Kanazawaeki Higashiguchi": "🏨",
+  "With Brother (TBD)": "👨‍👦",
+  "Asyl Hotel Tokyo Kamata": "🏨",
+  "In-flight / NYC": "✈️"
+};
+
+function getSleepIcon(sleep) {
+  for (const [k, v] of Object.entries(SLEEP_ICONS)) {
+    if (sleep.includes(k.split(' ')[0])) return v;
+  }
+  return "🛏️";
+}
+
+function formatMins(m) {
+  if (!m) return '';
+  const h = Math.floor(m / 60), min = m % 60;
+  return h > 0 ? (min > 0 ? `${h}h ${min}m` : `${h}h`) : `${min}m`;
+}
+
+let activeFilter = 'all';
+let searchQuery = '';
+
+function matchesFilter(day) {
+  if (activeFilter === 'all') return true;
+  if (activeFilter === 'highland') return day.tags.includes('highland');
+  if (activeFilter === 'onsen') return day.tags.includes('onsen');
+  if (activeFilter === 'solo') return day.tags.includes('solo');
+  if (activeFilter === 'kay') return day.tags.includes('kay');
+  if (activeFilter === 'brother') return day.tags.includes('brother');
+  if (activeFilter === 'travel') return day.tags.includes('travel');
+  return true;
+}
+
+function matchesSearch(day) {
+  if (!searchQuery) return true;
+  const q = searchQuery.toLowerCase();
+  return (
+    day.title.toLowerCase().includes(q) ||
+    day.where.toLowerCase().includes(q) ||
+    day.sleep.toLowerCase().includes(q) ||
+    day.activities.some(a => a.toLowerCase().includes(q)) ||
+    day.date.toLowerCase().includes(q)
+  );
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDays();
+}
+
+function filterDays() {
+  searchQuery = document.getElementById('search-input').value;
+  renderDays();
+}
+
+function renderDays() {
+  const list = document.getElementById('day-list');
+  const visible = DAYS.filter(d => matchesFilter(d) && matchesSearch(d));
+  if (visible.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px 0;font-size:14px">No days match your search 🔍</div>';
+    return;
+  }
+  list.innerHTML = visible.map(day => buildCard(day)).join('');
+}
+
+function buildCard(day) {
+  const hasTransit = !!day.transit;
+  const icon = getSleepIcon(day.sleep);
+  const tagBadges = day.tags.includes('highland') ? '<span class="tag highland">🏔 Highland</span>' : '';
+
+  return `
+  <div class="card" id="card-${day.num}">
+    <div class="card-header" onclick="toggleCard(${day.num})">
+      <div class="day-badge">
+        <span class="num">${day.num}</span>
+        <span class="lbl">Day</span>
+      </div>
+      <div class="card-meta">
+        <div class="card-date">${day.date}</div>
+        <div class="card-title">${day.title}</div>
+        <div class="card-where">📍 ${day.where}</div>
+        <div class="card-sleep-badge">${icon} ${day.sleep}</div>
+      </div>
+      <div class="chevron">›</div>
+    </div>
+    <div class="card-body">
+      ${hasTransit ? `
+      <div class="section">
+        <div class="section-label">Transit</div>
+        <div class="transport-card">
+          <div class="transport-row">
+            <span class="transport-icon">🚄</span>
+            <div>
+              <div class="transport-name">${day.transit.name}</div>
+              <div class="transport-route">${day.transit.from} → ${day.transit.to}</div>
+            </div>
+            <span class="transport-time">Dep ${day.transit.depart}</span>
+          </div>
+          <div class="transport-row" style="padding-left:30px">
+            <span class="transport-duration">⏱ ${formatMins(day.transit.mins)} · Arr ${day.transit.arrive}</span>
+          </div>
+        </div>
+      </div>
+      ` : ''}
+      <div class="section">
+        <div class="section-label">Activities</div>
+        <ul class="act-list">
+          ${day.activities.map(a => `<li class="act-item"><span class="act-dot"></span><span>${a}</span></li>`).join('')}
+        </ul>
+      </div>
+      <div class="section">
+        <div class="section-label">Sleep</div>
+        <div class="hotel-row">
+          <span class="hotel-icon">${getSleepIcon(day.sleep)}</span>
+          <span class="hotel-name">${day.sleep}</span>
+        </div>
+      </div>
+      ${tagBadges ? `<div class="section"><div class="tags">${tagBadges}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleCard(num) {
+  const card = document.getElementById(`card-${num}`);
+  card.classList.toggle('open');
+}
+
+function showTab(tab) {
+  document.getElementById('app-itinerary').style.display = tab === 'itinerary' ? '' : 'none';
+  document.getElementById('app-info').style.display = tab === 'info' ? '' : 'none';
+  document.getElementById('nav-itinerary').classList.toggle('active', tab === 'itinerary');
+  document.getElementById('nav-info').classList.toggle('active', tab === 'info');
+}
+
+// Progress: calculate based on today's date
+function updateProgress() {
+  const start = new Date('2026-07-04');
+  const end = new Date('2026-07-19');
+  const now = new Date();
+  let pct = 0;
+  let dayNum = 1;
+  if (now >= start && now <= end) {
+    const elapsed = (now - start) / (1000 * 60 * 60 * 24);
+    pct = Math.min(100, (elapsed / 15) * 100);
+    dayNum = Math.min(16, Math.max(1, Math.ceil(elapsed)));
+  } else if (now > end) {
+    pct = 100; dayNum = 16;
+  }
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `Day ${dayNum} of 16`;
+}
+
+// Init
+renderDays();
+updateProgress();
+</script>
+</body>
+</html>

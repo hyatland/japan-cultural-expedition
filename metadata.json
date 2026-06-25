@@ -1,0 +1,7 @@
+{
+  "name": "Japan Cultural Expedition",
+  "description": "An interactive trip planning and visualization tool for a cultural journey through Japan, from the neon lights of Tokyo to the historic temples of Kyoto.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
