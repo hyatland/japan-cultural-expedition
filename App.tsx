@@ -217,6 +217,55 @@ const App: React.FC = () => {
     setIsLoadingSuggestions(false);
   }, [days, selectedDayNum]);
 
+  const isDark = theme === 'dark';
+
+  // ── Theme-aware color tokens ──
+  const sb = {
+    bg:          isDark ? '#0e0e0e' : '#f2f1ed',
+    listBg:      isDark ? '#141414' : '#f7f6f3',
+    tripMuted:   isDark ? '#4e4c48' : '#c0bcb6',
+    tripBold:    isDark ? '#f2f1ed' : '#0e0e0e',
+    subText:     isDark ? '#3a3936' : '#a8a4a0',
+    btnBg:       isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+    btnColor:    isDark ? '#888' : '#666',
+    rowBg:       isDark ? '#141414' : '#ffffff',
+    rowBgHl:     isDark ? '#1a1c22' : '#faf9f3',
+    rowRule:     isDark ? '#222222' : '#ebe9e5',
+    rowRuleHl:   isDark ? '#282a32' : '#e2ddd4',
+    badgeBg:     isDark ? '#2e2e2e' : '#e2e0dc',
+    badgeTxt:    isDark ? '#888'    : '#706e6a',
+    cityColor:   isDark ? '#dadad8' : '#1a1816',
+    cityColorHl: isDark ? '#bc9224' : '#8a6c10',
+    dateColor:   isDark ? '#484644' : '#a0a09c',
+    dateColorHl: isDark ? '#948c48' : '#8a7820',
+    routeMeta:   isDark ? '#3a3836' : '#c8c4c0',
+    dragHandle:  isDark ? '#333'    : '#c0bebb',
+    editBtn:     isDark ? '#555'    : '#aaa8a4',
+  };
+
+  const cd = {
+    bg:          isDark ? '#141414' : '#ffffff',
+    border:      isDark ? '#2a2a2a' : '#e0deda',
+    rule:        isDark ? '#252525' : '#eeece8',
+    label:       isDark ? '#4a4846' : '#a8a4a0',
+    text:        isDark ? '#d8d6d2' : '#1a1816',
+    textMuted:   isDark ? '#585654' : '#7a7876',
+    accentRed:   '#d02810',
+    terrainBg:   isDark ? '#1c1c1c' : '#faf9f7',
+    terrainRule: isDark ? '#d02810' : '#d02810',
+    trainBg:     isDark ? '#1c1c1c' : '#f5f4f0',
+    trainBorder: isDark ? '#2e2e2e' : '#dcdad6',
+    chipBorder:  isDark ? 'rgba(208,40,16,0.5)' : '#d02810',
+    chipText:    isDark ? '#e06040' : '#d02810',
+    sectionBg:   isDark ? '#1a1a1a' : '#f9f8f6',
+    tipBg:       isDark ? '#1e1a12' : '#fffbf0',
+    tipBorder:   isDark ? '#3a3018' : '#f0e8c8',
+    tipText:     isDark ? '#a89060' : '#8a6a10',
+    inputBg:     isDark ? '#1a1a1a' : '#f5f4f0',
+    inputBorder: isDark ? '#333'    : '#d8d6d2',
+    inputText:   isDark ? '#d8d6d2' : '#1a1816',
+  };
+
   return (
     <div className="flex flex-col lg:flex-row h-[100svh] w-full bg-[#f7f6f3] dark:bg-[#0f0f0f] text-slate-950 dark:text-slate-100 overflow-hidden">
 
@@ -232,34 +281,34 @@ const App: React.FC = () => {
       {/* ─── Sidebar ─── */}
       <div className={`fixed lg:relative inset-x-0 bottom-0 lg:inset-auto w-full lg:w-[400px] flex flex-col z-40 shrink-0 transition-transform duration-500 ease-in-out h-[90svh] lg:h-full overflow-hidden ${
         isMobile ? (isSidebarExpanded ? 'translate-y-0' : 'translate-y-[calc(90svh-100px)]') : 'translate-y-0'
-      }`} style={{ backgroundColor: '#0e0e0e' }}>
+      }`} style={{ backgroundColor: sb.bg }}>
 
         {/* ── Transit Header ── */}
         <div
           onClick={isMobile ? () => setIsSidebarExpanded(!isSidebarExpanded) : undefined}
           className="shrink-0 cursor-pointer lg:cursor-default"
-          style={{ backgroundColor: '#0e0e0e', borderBottom: '2px solid #d02810', padding: '16px 36px 14px' }}
+          style={{ backgroundColor: sb.bg, borderBottom: '2px solid #d02810', padding: '16px 36px 14px' }}
         >
           <div className="flex items-center justify-between">
             <div>
               <div className="font-transit-city leading-none" style={{ fontSize: '42px', lineHeight: 1 }}>
-                <span style={{ color: '#4e4c48' }}>TRIP </span>
-                <span style={{ color: '#f2f1ed' }}>JPN</span>
+                <span style={{ color: sb.tripMuted }}>TRIP </span>
+                <span style={{ color: sb.tripBold }}>JPN</span>
               </div>
-              <div className="font-transit-mono mt-2" style={{ fontSize: '8px', color: '#3a3936', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+              <div className="font-transit-mono mt-2" style={{ fontSize: '8px', color: sb.subText, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                 Japan Cultural Expedition · July 2026
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
-                style={{ background: 'rgba(255,255,255,0.07)', borderRadius: '50%', padding: '7px', color: '#888' }}
-                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                style={{ background: sb.btnBg, borderRadius: '50%', padding: '7px', color: sb.btnColor }}
+                title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
               >
-                {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+                {isDark ? <Sun size={15} /> : <Moon size={15} />}
               </button>
               {isMobile && (
-                <div style={{ background: 'rgba(255,255,255,0.07)', borderRadius: '50%', padding: '7px', color: '#666' }}>
+                <div style={{ background: sb.btnBg, borderRadius: '50%', padding: '7px', color: sb.btnColor }}>
                   {isSidebarExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                 </div>
               )}
@@ -268,7 +317,7 @@ const App: React.FC = () => {
         </div>
 
         {/* ── Day List ── */}
-        <div className="flex-1 overflow-y-auto" style={{ backgroundColor: '#141414' }}>
+        <div className="flex-1 overflow-y-auto" style={{ backgroundColor: sb.listBg }}>
           {days.map((day, idx) => {
             const isActive = selectedDayNum === day.dayNum;
             const city = cityLabel(day);
@@ -276,7 +325,6 @@ const App: React.FC = () => {
             const arr = day.trainInfo?.arrivalStation;
 
             if (isActive) {
-              /* ── ACTIVE: full red block ── */
               return (
                 <div
                   key={`${day.dayNum}-active`}
@@ -284,11 +332,8 @@ const App: React.FC = () => {
                   style={{ backgroundColor: '#d02810' }}
                   onClick={() => { setIsCardMinimized(v => !v); }}
                 >
-                  {/* Left accent bar */}
                   <div className="absolute left-0 top-0 bottom-0" style={{ width: '3px', backgroundColor: '#ff5a32' }} />
-
                   <div style={{ padding: '14px 36px 0 36px' }}>
-                    {/* num + date */}
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="font-transit-mono" style={{ fontSize: '10px', color: 'rgba(255,175,155,0.9)' }}>
                         {String(day.dayNum).padStart(2, '0')}
@@ -300,35 +345,25 @@ const App: React.FC = () => {
                         <span className="font-transit-mono" style={{ fontSize: '8px', color: 'rgba(255,210,100,0.85)', letterSpacing: '0.15em' }}>· HIGHLAND</span>
                       )}
                     </div>
-                    {/* Mega city name */}
                     <div className="font-transit-city" style={{ fontSize: '88px', lineHeight: 0.9, color: '#fff', marginLeft: '-2px', letterSpacing: '-0.02em' }}>
                       {city}
                     </div>
-                    {/* Location sub-label */}
                     <div className="font-transit-mono" style={{ fontSize: '8px', color: 'rgba(255,185,165,0.85)', marginTop: '10px', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                       {city}, JAPAN
                     </div>
                   </div>
-
-                  {/* Departure / Arrival card */}
                   <div style={{ margin: '12px 36px 18px', backgroundColor: '#faf9f7' }}>
                     <div className="flex">
                       <div className="flex-1" style={{ padding: '10px 14px', borderRight: '1px solid #c8c4be' }}>
                         <div className="font-transit-mono" style={{ fontSize: '7px', fontWeight: 700, color: '#958c84', marginBottom: '4px', letterSpacing: '0.1em' }}>DEPARTURE:</div>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#0e0e0e', textTransform: 'uppercase', letterSpacing: '0.01em' }}>
-                          {dep ?? '—'}
-                        </div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#0e0e0e', textTransform: 'uppercase' }}>{dep ?? '—'}</div>
                       </div>
                       <div className="flex-1" style={{ padding: '10px 14px' }}>
                         <div className="font-transit-mono" style={{ fontSize: '7px', fontWeight: 700, color: '#958c84', marginBottom: '4px', letterSpacing: '0.1em' }}>ARRIVAL:</div>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#0e0e0e', textTransform: 'uppercase', letterSpacing: '0.01em' }}>
-                          {arr ?? day.sleep}
-                        </div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#0e0e0e', textTransform: 'uppercase' }}>{arr ?? day.sleep}</div>
                       </div>
                     </div>
                   </div>
-
-                  {/* Edit icon */}
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditingDay(day); }}
                     className="absolute top-3 right-3"
@@ -342,12 +377,12 @@ const App: React.FC = () => {
             }
 
             /* ── INACTIVE ROW ── */
-            const bg  = day.isHighland ? '#1a1c22' : '#141414';
-            const rule = day.isHighland ? '#282a32' : '#222222';
-            const badgeBg   = day.isHighland ? '#bc9224' : '#2e2e2e';
-            const badgeTxt  = day.isHighland ? '#0e0e0e' : '#888';
-            const cityColor = day.isHighland ? '#bc9224' : '#dadad8';
-            const dateColor = day.isHighland ? '#948c48' : '#484644';
+            const rowBg      = day.isHighland ? sb.rowBgHl  : sb.rowBg;
+            const rowRule    = day.isHighland ? sb.rowRuleHl : sb.rowRule;
+            const badgeBg    = day.isHighland ? '#bc9224'   : sb.badgeBg;
+            const badgeTxt   = day.isHighland ? '#0e0e0e'   : sb.badgeTxt;
+            const cityColor  = day.isHighland ? sb.cityColorHl : sb.cityColor;
+            const dateColor  = day.isHighland ? sb.dateColorHl : sb.dateColor;
 
             return (
               <div
@@ -360,8 +395,8 @@ const App: React.FC = () => {
                 onClick={() => handleDaySelect(day.dayNum)}
                 className="cursor-pointer group transition-colors"
                 style={{
-                  backgroundColor: bg,
-                  borderTop: `1px solid ${rule}`,
+                  backgroundColor: rowBg,
+                  borderTop: `1px solid ${rowRule}`,
                   height: '48px',
                   display: 'flex',
                   alignItems: 'center',
@@ -371,39 +406,28 @@ const App: React.FC = () => {
                   ...(dragIdx === idx ? { opacity: 0.4 } : {}),
                 }}
               >
-                {/* Drag handle (hidden until hover) */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity mr-2" style={{ color: '#333' }}>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity mr-2" style={{ color: sb.dragHandle }}>
                   <GripVertical size={11} />
                 </div>
-
-                {/* Badge */}
                 <div className="shrink-0 flex items-center justify-center font-transit-mono"
                      style={{ width: '28px', height: '20px', backgroundColor: badgeBg, fontSize: '8px', fontWeight: 700, color: badgeTxt }}>
                   {String(day.dayNum).padStart(2, '0')}
                 </div>
-
-                {/* Date */}
                 <span className="font-transit-mono ml-2.5 shrink-0" style={{ fontSize: '9px', color: dateColor }}>
                   {day.date}
                 </span>
-
-                {/* City name */}
                 <span className="font-transit-city ml-3 shrink-0" style={{ fontSize: '14px', color: cityColor, textTransform: 'uppercase' }}>
                   {city}
                 </span>
-
-                {/* Route meta — right */}
                 {dep && arr && (
-                  <span className="font-transit-mono ml-auto shrink-0" style={{ fontSize: '7px', color: '#3a3836', whiteSpace: 'nowrap' }}>
+                  <span className="font-transit-mono ml-auto shrink-0" style={{ fontSize: '7px', color: sb.routeMeta, whiteSpace: 'nowrap' }}>
                     {dep.slice(0, 9).toUpperCase()} → {arr.slice(0, 9).toUpperCase()}
                   </span>
                 )}
-
-                {/* Edit on hover */}
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditingDay(day); }}
                   className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0"
-                  style={{ padding: '3px', borderRadius: '3px', color: '#555' }}
+                  style={{ padding: '3px', borderRadius: '3px', color: sb.editBtn }}
                   title="Edit day"
                 >
                   <Pencil size={10} />
@@ -427,13 +451,13 @@ const App: React.FC = () => {
         {mainView === 'packing' && (
           <div className="absolute inset-0 z-40 bg-white dark:bg-[#111] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-white/5 shrink-0">
-              <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                <ShoppingBag size={14} className="text-blue-500" />
+              <div className="flex items-center gap-2 font-transit-mono text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                <ShoppingBag size={13} className="text-blue-500" />
                 PACKING LIST
               </div>
               <button
                 onClick={() => switchView('map')}
-                className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="font-transit-mono text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-3 py-1.5 uppercase tracking-widest"
               >
                 ← Back to Map
               </button>
@@ -443,148 +467,259 @@ const App: React.FC = () => {
         )}
 
         {/* Tab bar */}
-        <div className="absolute top-4 right-4 lg:right-6 z-30 flex items-center gap-0.5 bg-white dark:bg-[#1a1a1a] rounded-xl border border-slate-100 dark:border-white/10 p-1 shadow-sm pointer-events-auto">
-          <button
-            onClick={() => switchView('map')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${mainView === 'map' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
-          >
-            <MapPin size={12} /> Map
-          </button>
-          <button
-            onClick={() => switchView('packing')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${mainView === 'packing' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
-          >
-            <ShoppingBag size={12} /> Packing
-          </button>
-          <button
-            onClick={() => switchView('print')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${mainView === 'print' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
-          >
-            <Printer size={12} /> Print
-          </button>
+        <div className="absolute top-4 right-4 lg:right-6 z-30 flex items-center gap-0 pointer-events-auto"
+             style={{ backgroundColor: cd.bg, border: `1px solid ${cd.border}` }}>
+          {(['map', 'packing', 'print'] as const).map((v) => {
+            const icons = { map: <MapPin size={11} />, packing: <ShoppingBag size={11} />, print: <Printer size={11} /> };
+            const labels = { map: 'MAP', packing: 'PACKING', print: 'PRINT' };
+            const isActive = mainView === v;
+            return (
+              <button
+                key={v}
+                onClick={() => switchView(v)}
+                className="font-transit-mono flex items-center gap-1.5 px-3 py-2 text-[9px] transition-all"
+                style={{
+                  backgroundColor: isActive ? '#d02810' : 'transparent',
+                  color: isActive ? '#fff' : cd.label,
+                  letterSpacing: '0.12em',
+                  borderRight: v !== 'print' ? `1px solid ${cd.border}` : 'none',
+                }}
+              >
+                {icons[v]} {labels[v]}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Detail Card — only visible on map view */}
-        <div className={`absolute top-4 lg:top-6 left-4 lg:left-6 right-4 lg:right-56 pointer-events-none z-20 transition-all duration-500 ${
+        {/* ─── Detail Card — Transit Manifesto Treatment ─── */}
+        <div className={`absolute top-4 lg:top-6 left-4 lg:left-6 right-4 lg:right-36 pointer-events-none z-20 transition-all duration-500 ${
           mainView !== 'map' ? 'opacity-0 pointer-events-none' : (isMobile && isSidebarExpanded ? 'opacity-0 scale-95' : 'opacity-100 scale-100')
         }`}>
-          <div
-            className={`bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-slate-100 dark:border-white/10 max-w-4xl pointer-events-auto transition-all duration-300 flex flex-col overflow-hidden`}
-          >
-            {/* ── Minimized pill (always visible) ── */}
-            <div
-              className="flex items-center gap-3 px-3 py-2.5 cursor-pointer select-none"
-              onClick={() => setIsCardMinimized(v => !v)}
-            >
-              {/* Day badge */}
-              <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white ${selectedDay.isHighland ? 'bg-yellow-500' : 'bg-orange-500'}`}>
-                {selectedDay.dayNum}
+          <div className="max-w-4xl pointer-events-auto flex flex-col overflow-hidden"
+               style={{ backgroundColor: cd.bg, border: `1px solid ${cd.border}`, borderRadius: 0 }}>
+
+            {/* ── Ticket Header (always visible) ── */}
+            <div className="flex items-stretch cursor-pointer select-none"
+                 onClick={() => setIsCardMinimized(v => !v)}
+                 style={{ borderBottom: `1px solid ${cd.rule}` }}>
+
+              {/* Day number block */}
+              <div className="shrink-0 flex items-center justify-center"
+                   style={{ backgroundColor: selectedDay.isHighland ? '#bc9224' : '#d02810', width: '56px', minHeight: '52px' }}>
+                <div className="font-transit-city text-white text-center" style={{ fontSize: '24px', lineHeight: 1 }}>
+                  {String(selectedDay.dayNum).padStart(2, '0')}
+                </div>
               </div>
 
-              {/* Title + meta */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-500 tabular-nums">{selectedDay.date}</span>
-                  {selectedDay.isHighland && <span className="text-[9px] font-black text-yellow-600 dark:text-yellow-500 uppercase">· Mountain</span>}
+              {/* Title + date */}
+              <div className="flex-1 px-4 py-2.5 min-w-0">
+                <div className="font-transit-mono mb-0.5" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                  {selectedDay.date}{selectedDay.isHighland ? ' · HIGHLAND' : ''}
                 </div>
-                <h2 className="text-[13px] font-semibold text-slate-900 dark:text-white leading-tight truncate">
-                  {selectedDay.title}
+                <h2 className="font-transit-city leading-tight truncate" style={{ fontSize: '17px', color: cd.text, letterSpacing: '-0.01em' }}>
+                  {selectedDay.title.toUpperCase()}
                 </h2>
               </div>
 
-              {/* Sleep chip */}
-              <div className="hidden sm:flex items-center gap-1.5 shrink-0 bg-slate-50 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-white/10 max-w-[160px]">
-                <Bed size={11} className="text-slate-400 shrink-0" />
-                <span className="text-[10px] text-slate-500 dark:text-slate-300 truncate">{selectedDay.sleep}</span>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                <button
-                  onClick={() => setEditingDay(selectedDay)}
-                  className="p-1.5 rounded-lg text-slate-400 dark:text-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                  title="Edit this day"
-                >
-                  <Pencil size={13} />
-                </button>
-              </div>
-
-              {/* Expand chevron */}
-              <div className="shrink-0 text-slate-400 dark:text-slate-600 transition-transform duration-300" style={{ transform: isCardMinimized ? 'rotate(0deg)' : 'rotate(180deg)' }}>
-                <ChevronDown size={16} />
+              {/* Sleep + actions */}
+              <div className="flex items-center gap-0 shrink-0" style={{ borderLeft: `1px solid ${cd.rule}` }}>
+                <div className="hidden sm:flex items-center gap-1.5 px-3"
+                     style={{ borderRight: `1px solid ${cd.rule}` }}>
+                  <Bed size={10} style={{ color: cd.label, flexShrink: 0 }} />
+                  <span className="font-transit-mono truncate max-w-[110px]" style={{ fontSize: '8px', color: cd.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {selectedDay.sleep}
+                  </span>
+                </div>
+                <div className="flex items-center px-2" onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => setEditingDay(selectedDay)}
+                    className="p-1.5 transition-colors"
+                    style={{ color: cd.label }}
+                    title="Edit this day"
+                  >
+                    <Pencil size={12} />
+                  </button>
+                </div>
+                <div className="px-2 transition-transform duration-300" style={{ color: cd.label, transform: isCardMinimized ? 'rotate(0deg)' : 'rotate(180deg)' }}>
+                  <ChevronDown size={15} />
+                </div>
               </div>
             </div>
 
             {/* ── Expanded body ── */}
             {!isCardMinimized && (
-              <div className={`border-t border-slate-100 dark:border-white/10 flex-1 overflow-y-auto ${isMobile ? 'max-h-[55svh]' : 'max-h-[68vh]'}`}>
-                <div className="p-4 lg:p-5 space-y-4 lg:space-y-5">
+              <div className={`overflow-y-auto ${isMobile ? 'max-h-[55svh]' : 'max-h-[68vh]'}`}>
 
-                  {/* Train & Timing */}
-                  <TrainInfoPanel
-                    trainInfo={selectedDay.trainInfo}
-                    onTrainInfoChange={handleTrainInfoChange}
-                    departureTime={selectedDay.departureTime}
-                    arrivalTime={selectedDay.arrivalTime}
-                    travelDurationMinutes={selectedDay.travelDurationMinutes}
-                    onTimingChange={handleTimingChange}
-                  />
+                {/* ── Timing strip ── */}
+                <div className="flex items-center gap-3 px-4 py-2.5" style={{ borderBottom: `1px solid ${cd.rule}`, backgroundColor: cd.sectionBg }}>
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={10} style={{ color: '#16a34a', flexShrink: 0 }} />
+                    <span className="font-transit-mono uppercase" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.15em' }}>Depart</span>
+                    <input
+                      type="time"
+                      value={selectedDay.departureTime || ''}
+                      onChange={(e) => handleTimingChange('departureTime', e.target.value)}
+                      className="font-transit-mono outline-none"
+                      style={{ backgroundColor: cd.inputBg, border: `1px solid ${cd.inputBorder}`, color: cd.inputText, fontSize: '11px', padding: '2px 6px', width: '80px' }}
+                    />
+                  </div>
+                  <div className="flex-1 relative" style={{ borderTop: `1px dashed ${cd.inputBorder}` }}>
+                    {selectedDay.travelDurationMinutes && (
+                      <span className="font-transit-mono absolute -top-2.5 left-1/2 -translate-x-1/2 px-2"
+                            style={{ fontSize: '8px', color: cd.label, backgroundColor: cd.sectionBg }}>
+                        {Math.floor(selectedDay.travelDurationMinutes / 60) > 0
+                          ? `${Math.floor(selectedDay.travelDurationMinutes / 60)}h ${selectedDay.travelDurationMinutes % 60}m`
+                          : `${selectedDay.travelDurationMinutes}m`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-transit-mono uppercase" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.15em' }}>Arrive</span>
+                    <input
+                      type="time"
+                      value={selectedDay.arrivalTime || ''}
+                      onChange={(e) => handleTimingChange('arrivalTime', e.target.value)}
+                      className="font-transit-mono outline-none"
+                      style={{ backgroundColor: cd.inputBg, border: `1px solid ${cd.inputBorder}`, color: cd.inputText, fontSize: '11px', padding: '2px 6px', width: '80px' }}
+                    />
+                    <Clock size={10} style={{ color: '#ea580c', flexShrink: 0 }} />
+                  </div>
+                </div>
 
-                  {/* Two-col layout */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-                    <div className="lg:col-span-2 space-y-4">
-                      {/* Terrain & Transport */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                            <Zap size={13} className="text-yellow-500" /> Terrain
-                          </p>
-                          <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-lg border border-slate-100 dark:border-white/5">
-                            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed italic">"{selectedDay.terrain}"</p>
-                          </div>
+                {/* ── Train info ── */}
+                {selectedDay.trainInfo && (selectedDay.trainInfo.trainName || selectedDay.trainInfo.departureStation) ? (
+                  <div className="flex items-stretch" style={{ borderBottom: `1px solid ${cd.rule}`, backgroundColor: cd.trainBg }}>
+                    {/* Train name column */}
+                    <div className="shrink-0 px-4 py-2.5 flex items-center gap-2" style={{ borderRight: `1px solid ${cd.trainBorder}`, minWidth: '140px' }}>
+                      <Train size={12} style={{ color: '#0ea5e9', flexShrink: 0 }} />
+                      <div>
+                        <div className="font-transit-mono" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '2px' }}>Train</div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: cd.text }}>
+                          {selectedDay.trainInfo.trainName}{selectedDay.trainInfo.trainNumber ? ` ${selectedDay.trainInfo.trainNumber}` : ''}
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                            <Compass size={13} className="text-orange-500" /> Transport
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {selectedDay.routeOptions.map((opt, i) => (
-                              <span key={i} className="bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-orange-300 dark:border-orange-500/20">{opt}</span>
-                            ))}
+                        {(selectedDay.trainInfo.carNumber || selectedDay.trainInfo.seatNumber) && (
+                          <div className="font-transit-mono" style={{ fontSize: '8px', color: cd.textMuted }}>
+                            {selectedDay.trainInfo.carNumber && `Car ${selectedDay.trainInfo.carNumber}`}
+                            {selectedDay.trainInfo.carNumber && selectedDay.trainInfo.seatNumber && ' · '}
+                            {selectedDay.trainInfo.seatNumber && `Seat ${selectedDay.trainInfo.seatNumber}`}
                           </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* Route */}
+                    <div className="flex-1 flex items-center px-4 py-2.5">
+                      <div className="flex items-center gap-2 w-full text-[10px]">
+                        <div>
+                          <div className="font-transit-mono" style={{ fontSize: '7px', color: '#16a34a', letterSpacing: '0.12em', textTransform: 'uppercase' }}>FROM</div>
+                          <div style={{ fontWeight: 700, color: cd.text }}>{selectedDay.trainInfo.departureStation}</div>
+                          {selectedDay.trainInfo.departureTime && <div className="font-transit-mono" style={{ fontSize: '9px', color: '#16a34a' }}>{selectedDay.trainInfo.departureTime}</div>}
+                        </div>
+                        <div className="flex-1 relative" style={{ borderTop: `1px dotted ${cd.inputBorder}`, margin: '0 8px' }}>
+                          {selectedDay.trainInfo.durationMinutes && (
+                            <span className="font-transit-mono absolute -top-2 left-1/2 -translate-x-1/2 px-1"
+                                  style={{ fontSize: '7px', color: '#0ea5e9', backgroundColor: cd.trainBg }}>
+                              {Math.floor(selectedDay.trainInfo.durationMinutes / 60) > 0
+                                ? `${Math.floor(selectedDay.trainInfo.durationMinutes / 60)}h ${selectedDay.trainInfo.durationMinutes % 60}m`
+                                : `${selectedDay.trainInfo.durationMinutes}m`}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-transit-mono" style={{ fontSize: '7px', color: '#ea580c', letterSpacing: '0.12em', textTransform: 'uppercase' }}>TO</div>
+                          <div style={{ fontWeight: 700, color: cd.text }}>{selectedDay.trainInfo.arrivalStation}</div>
+                          {selectedDay.trainInfo.arrivalTime && <div className="font-transit-mono" style={{ fontSize: '9px', color: '#ea580c' }}>{selectedDay.trainInfo.arrivalTime}</div>}
                         </div>
                       </div>
+                    </div>
+                    {/* Edit train */}
+                    <div className="shrink-0 flex items-center px-3" style={{ borderLeft: `1px solid ${cd.trainBorder}` }}>
+                      <button
+                        onClick={() => setEditingDay(selectedDay)}
+                        style={{ color: cd.label, padding: '4px' }}
+                        title="Edit train info"
+                      >
+                        <Pencil size={11} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setEditingDay(selectedDay)}
+                    className="w-full flex items-center justify-center gap-2 font-transit-mono transition-colors"
+                    style={{ fontSize: '9px', color: '#0ea5e9', letterSpacing: '0.15em', padding: '10px', borderBottom: `1px solid ${cd.rule}`, textTransform: 'uppercase' }}
+                  >
+                    <Train size={12} /> Add Train Details
+                  </button>
+                )}
 
-                      {/* Day Plan — List / Timeline */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                            <Waves size={13} className="text-blue-400" /> Day Plan
-                          </p>
-                          <div className="flex items-center bg-slate-100 dark:bg-white/10 rounded-lg p-0.5 gap-0.5">
-                            <button
-                              onClick={() => setViewMode('list')}
-                              className={`px-2.5 py-1 rounded-md text-[9px] font-semibold transition-all ${viewMode === 'list' ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                            >
-                              List
-                            </button>
-                            <button
-                              onClick={() => setViewMode('timeline')}
-                              className={`px-2.5 py-1 rounded-md text-[9px] font-semibold transition-all ${viewMode === 'timeline' ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                            >
-                              Timeline
-                            </button>
-                          </div>
+                {/* ── Two-col body ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3" style={{ borderBottom: `1px solid ${cd.rule}` }}>
+
+                  {/* Left 2/3 */}
+                  <div className="lg:col-span-2">
+
+                    {/* Terrain + Transport row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2" style={{ borderBottom: `1px solid ${cd.rule}` }}>
+
+                      {/* Terrain */}
+                      <div className="p-4" style={{ borderRight: `1px solid ${cd.rule}` }}>
+                        <div className="font-transit-mono mb-2" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                          ⚡ TERRAIN
                         </div>
-                        <DayTimeline
-                          key={selectedDay.dayNum}
-                          day={selectedDay}
-                          mode={viewMode}
-                          onUpdateActivities={handleUpdateActivities}
-                        />
+                        <p style={{ fontSize: '11px', color: cd.textMuted, fontStyle: 'italic', lineHeight: 1.5, borderLeft: `2px solid ${cd.accentRed}`, paddingLeft: '10px' }}>
+                          "{selectedDay.terrain}"
+                        </p>
                       </div>
 
-                      {/* POI Toggle */}
+                      {/* Transport */}
+                      <div className="p-4">
+                        <div className="font-transit-mono mb-2" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                          ◎ TRANSPORT
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedDay.routeOptions.map((opt, i) => (
+                            <span key={i} className="font-transit-mono"
+                                  style={{ fontSize: '9px', fontWeight: 700, color: cd.chipText, border: `1px solid ${cd.chipBorder}`, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                              {opt}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Day Plan */}
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="font-transit-mono" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                          ≈ DAY PLAN
+                        </div>
+                        <div className="flex items-center gap-0" style={{ border: `1px solid ${cd.border}` }}>
+                          <button
+                            onClick={() => setViewMode('list')}
+                            className="font-transit-mono px-2.5 py-1 transition-all"
+                            style={{ fontSize: '8px', letterSpacing: '0.1em', backgroundColor: viewMode === 'list' ? '#d02810' : 'transparent', color: viewMode === 'list' ? '#fff' : cd.label, textTransform: 'uppercase' }}
+                          >
+                            LIST
+                          </button>
+                          <button
+                            onClick={() => setViewMode('timeline')}
+                            className="font-transit-mono px-2.5 py-1 transition-all"
+                            style={{ fontSize: '8px', letterSpacing: '0.1em', backgroundColor: viewMode === 'timeline' ? '#d02810' : 'transparent', color: viewMode === 'timeline' ? '#fff' : cd.label, textTransform: 'uppercase', borderLeft: `1px solid ${cd.border}` }}
+                          >
+                            TIMELINE
+                          </button>
+                        </div>
+                      </div>
+                      <DayTimeline
+                        key={selectedDay.dayNum}
+                        day={selectedDay}
+                        mode={viewMode}
+                        onUpdateActivities={handleUpdateActivities}
+                      />
+                    </div>
+
+                    {/* POI Toggle */}
+                    <div className="px-4 pb-4">
                       <POIToggleList
                         pois={selectedDay.pois}
                         onTogglePoi={handleTogglePoi}
@@ -595,76 +730,72 @@ const App: React.FC = () => {
                         onSearchNearby={handleSearchNearby}
                       />
                     </div>
+                  </div>
 
-                    {/* Right column */}
-                    <div className="space-y-4 lg:border-l lg:border-slate-100 dark:lg:border-white/5 lg:pl-6">
-                      <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-xl border border-slate-100 dark:border-white/5">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="p-2 bg-slate-100 dark:bg-white/10 rounded-lg">
-                            <Bed size={16} className="text-slate-500 dark:text-slate-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[8px] text-slate-600 dark:text-slate-500 uppercase font-black tracking-widest">Base Camp</p>
-                            <p className="text-xs font-bold text-slate-950 dark:text-white truncate">{selectedDay.sleep}</p>
-                          </div>
-                        </div>
+                  {/* Right 1/3 */}
+                  <div style={{ borderLeft: `1px solid ${cd.rule}` }}>
 
-                        {/* Booking Reference */}
-                        {(selectedDay.bookingRef || selectedDay.bookingUrl || selectedDay.checkInTime || selectedDay.checkOutTime) ? (
-                          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5 space-y-2">
-                            <div className="flex items-center gap-1.5">
-                              <Ticket size={11} className="text-orange-500 dark:text-orange-400 shrink-0" />
-                              <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Booking</span>
-                            </div>
-                            {(selectedDay.checkInTime || selectedDay.checkOutTime) && (
-                              <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-lg px-3 py-2">
-                                {selectedDay.checkInTime && (
-                                  <div className="flex-1 text-center">
-                                    <p className="text-[8px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest">Check-in</p>
-                                    <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{selectedDay.checkInTime}</p>
-                                  </div>
-                                )}
-                                {selectedDay.checkInTime && selectedDay.checkOutTime && (
-                                  <div className="w-px h-6 bg-slate-300 dark:bg-slate-700" />
-                                )}
-                                {selectedDay.checkOutTime && (
-                                  <div className="flex-1 text-center">
-                                    <p className="text-[8px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest">Check-out</p>
-                                    <p className="text-sm font-black text-orange-600 dark:text-orange-400">{selectedDay.checkOutTime}</p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            {selectedDay.bookingRef && (
-                              <p className="text-[11px] font-bold text-orange-600 dark:text-orange-300 font-mono tracking-wide"># {selectedDay.bookingRef}</p>
-                            )}
-                            {selectedDay.bookingNote && (
-                              <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-snug">{selectedDay.bookingNote}</p>
-                            )}
-                            {selectedDay.bookingUrl && (
-                              <a
-                                href={selectedDay.bookingUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={e => e.stopPropagation()}
-                                className="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors group"
-                              >
-                                <ExternalLink size={12} className="group-hover:scale-110 transition-transform" />
-                                View Booking
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setEditingDay(selectedDay); }}
-                            className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5 w-full flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-600 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
-                          >
-                            <Ticket size={11} />
-                            Add booking reference
-                          </button>
-                        )}
+                    {/* Base Camp */}
+                    <div className="p-4" style={{ borderBottom: `1px solid ${cd.rule}` }}>
+                      <div className="font-transit-mono mb-2" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                        🛏 BASE CAMP
                       </div>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: cd.text, marginBottom: '8px' }}>{selectedDay.sleep}</div>
 
+                      {(selectedDay.bookingRef || selectedDay.bookingUrl || selectedDay.checkInTime || selectedDay.checkOutTime) ? (
+                        <div className="space-y-2">
+                          {(selectedDay.checkInTime || selectedDay.checkOutTime) && (
+                            <div className="flex items-stretch" style={{ border: `1px solid ${cd.border}` }}>
+                              {selectedDay.checkInTime && (
+                                <div className="flex-1 text-center py-1.5 px-2">
+                                  <div className="font-transit-mono" style={{ fontSize: '6px', color: cd.label, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Check-in</div>
+                                  <div className="font-transit-mono" style={{ fontSize: '13px', fontWeight: 700, color: '#16a34a' }}>{selectedDay.checkInTime}</div>
+                                </div>
+                              )}
+                              {selectedDay.checkInTime && selectedDay.checkOutTime && (
+                                <div style={{ width: '1px', backgroundColor: cd.border }} />
+                              )}
+                              {selectedDay.checkOutTime && (
+                                <div className="flex-1 text-center py-1.5 px-2">
+                                  <div className="font-transit-mono" style={{ fontSize: '6px', color: cd.label, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Check-out</div>
+                                  <div className="font-transit-mono" style={{ fontSize: '13px', fontWeight: 700, color: '#ea580c' }}>{selectedDay.checkOutTime}</div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {selectedDay.bookingRef && (
+                            <div className="font-transit-mono" style={{ fontSize: '10px', fontWeight: 700, color: cd.accentRed }}>
+                              # {selectedDay.bookingRef}
+                            </div>
+                          )}
+                          {selectedDay.bookingNote && (
+                            <p style={{ fontSize: '10px', color: cd.textMuted, lineHeight: 1.4 }}>{selectedDay.bookingNote}</p>
+                          )}
+                          {selectedDay.bookingUrl && (
+                            <a href={selectedDay.bookingUrl} target="_blank" rel="noopener noreferrer"
+                               onClick={e => e.stopPropagation()}
+                               className="font-transit-mono flex items-center gap-1.5 transition-colors"
+                               style={{ fontSize: '9px', color: cd.accentRed, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                              <ExternalLink size={10} /> VIEW BOOKING
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingDay(selectedDay); }}
+                          className="font-transit-mono flex items-center gap-1.5 transition-colors"
+                          style={{ fontSize: '8px', color: cd.label, textTransform: 'uppercase', letterSpacing: '0.12em' }}
+                        >
+                          <Ticket size={10} /> Add booking reference
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Travelers */}
+                    <div className="p-4" style={{ borderBottom: `1px solid ${cd.rule}` }}>
+                      <div className="font-transit-mono mb-2" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                        ◎ TRAVELERS
+                      </div>
                       <CompanionManager
                         companions={companions}
                         onCompanionsChange={setCompanions}
@@ -672,13 +803,16 @@ const App: React.FC = () => {
                         onDayCompanionsChange={handleDayCompanionsChange}
                         dayNum={selectedDay.dayNum}
                       />
+                    </div>
 
-                      <div className="p-3 bg-amber-50 dark:bg-amber-500/5 rounded-lg border border-amber-100 dark:border-amber-500/10">
-                        <p className="text-[10px] text-amber-600 dark:text-amber-500/70 font-semibold uppercase tracking-wide mb-1">Travel Tip</p>
-                        <p className="text-[11px] text-amber-800/70 dark:text-slate-400 leading-relaxed">
-                          Get a <b>Suica/Pasmo</b> card for seamless transit. July is humid — stay hydrated!
-                        </p>
+                    {/* Travel Tip */}
+                    <div className="p-4" style={{ backgroundColor: cd.tipBg, borderTop: `2px solid ${cd.accentRed}` }}>
+                      <div className="font-transit-mono mb-1.5" style={{ fontSize: '7px', color: cd.tipText, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                        ★ TRAVEL TIP
                       </div>
+                      <p style={{ fontSize: '11px', color: cd.textMuted, lineHeight: 1.5 }}>
+                        Get a <b>Suica/Pasmo</b> card for seamless transit. July is humid — stay hydrated!
+                      </p>
                     </div>
                   </div>
                 </div>
