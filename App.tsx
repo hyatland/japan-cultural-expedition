@@ -17,6 +17,7 @@ import {
   Zap, Waves, Layers, ChevronUp, ChevronDown,
   Maximize2, Minimize2, GripVertical, AlertTriangle, Pencil,
   Ticket, ExternalLink, Moon, Sun, Printer, ShoppingBag,
+  Clock, Train,
 } from 'lucide-react';
 
 // ─── Legend ───
