@@ -36,7 +36,7 @@ const Legend = () => {
     { label: 'Mountain Route', color: 'bg-[#facc15]', dashed: true },
   ];
   return (
-    <div className="hidden sm:block absolute bottom-10 left-10 z-10 bg-white dark:bg-[#111]/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl pointer-events-auto max-w-[200px]">
+    <div className="hidden sm:block absolute bottom-10 left-10 z-10 bg-white/95 dark:bg-[#111]/95 backdrop-blur-sm p-4 rounded-xl border border-slate-100 dark:border-white/10 shadow-lg pointer-events-auto max-w-[200px]">
       <div className="flex items-center gap-2 mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
         <Layers size={14} className="text-blue-500" />
         <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Legend</span>
@@ -206,7 +206,7 @@ const App: React.FC = () => {
   }, [days, selectedDayNum]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-[100svh] w-full bg-white dark:bg-slate-950 text-slate-950 dark:text-slate-100 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-[100svh] w-full bg-[#f7f6f3] dark:bg-[#0f0f0f] text-slate-950 dark:text-slate-100 overflow-hidden">
 
       {/* ─── Edit Modal ─── */}
       {editingDay && (
@@ -218,33 +218,33 @@ const App: React.FC = () => {
       )}
 
       {/* ─── Sidebar ─── */}
-      <div className={`fixed lg:relative inset-x-0 bottom-0 lg:inset-auto w-full lg:w-[420px] bg-slate-100 dark:bg-[#111] shadow-2xl flex flex-col z-40 border-r border-slate-200 dark:border-white/5 shrink-0 transition-transform duration-500 ease-in-out h-[90svh] lg:h-full ${
+      <div className={`fixed lg:relative inset-x-0 bottom-0 lg:inset-auto w-full lg:w-[420px] bg-white dark:bg-[#111] shadow-none flex flex-col z-40 border-r border-slate-100 dark:border-white/5 shrink-0 transition-transform duration-500 ease-in-out h-[90svh] lg:h-full ${
         isMobile ? (isSidebarExpanded ? 'translate-y-0' : 'translate-y-[calc(90svh-120px)]') : 'translate-y-0'
       }`}>
         {/* Header */}
         <div
           onClick={isMobile ? () => setIsSidebarExpanded(!isSidebarExpanded) : undefined}
-          className="p-6 lg:p-8 bg-white dark:bg-[#0a0a0a] border-b border-slate-200 dark:border-white/5 cursor-pointer lg:cursor-default shrink-0 flex items-center justify-between"
+          className="px-5 py-5 lg:px-6 lg:py-6 bg-white dark:bg-[#0a0a0a] border-b border-slate-100 dark:border-white/5 cursor-pointer lg:cursor-default shrink-0 flex items-center justify-between"
         >
           <div>
-            <h1 className="text-2xl lg:text-3xl font-black tracking-tighter text-slate-950 dark:text-white uppercase">
+            <h1 className="text-xl lg:text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
               JAPAN <span className="text-orange-500">EXPEDITION</span>
             </h1>
-            <p className="text-slate-500 dark:text-slate-500 text-[9px] lg:text-[10px] mt-1 uppercase tracking-[0.3em] font-bold flex items-center gap-2">
-              <Compass size={14} className="text-orange-500" />
+            <p className="text-slate-400 dark:text-slate-500 text-[9px] lg:text-[10px] mt-1 uppercase tracking-[0.25em] font-semibold flex items-center gap-2">
+              <Compass size={12} className="text-orange-400" />
               July 2026 · {days.length} Days · {companions.length > 0 ? `${companions.length} Traveler${companions.length > 1 ? 's' : ''}` : 'Solo Journey'}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className="bg-slate-200 dark:bg-white/10 p-2 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/20 transition-colors"
+              className="bg-slate-100 dark:bg-white/10 p-2 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             {isMobile && (
-              <div className="bg-slate-200 dark:bg-white/10 p-2 rounded-full text-slate-600 dark:text-slate-400">
+              <div className="bg-slate-100 dark:bg-white/10 p-2 rounded-full text-slate-500 dark:text-slate-400">
                 {isSidebarExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
               </div>
             )}
@@ -252,7 +252,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Timeline */}
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5 bg-slate-100 dark:bg-[#111]">
+        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5 bg-white dark:bg-[#111]">
           {days.map((day, idx) => (
             <div
               key={`${day.dayNum}-${day.title}`}
@@ -263,10 +263,10 @@ const App: React.FC = () => {
               onDragEnd={handleDragEnd}
               className={`transition-all duration-150 ${dragOverIdx === idx && dragIdx !== idx ? 'border-t-2 border-orange-500 pt-0.5' : ''} ${dragIdx === idx ? 'opacity-40 scale-95' : ''}`}
             >
-              <div className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-all border flex items-center gap-2 group cursor-pointer ${
+              <div className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-2 group cursor-pointer ${
                 selectedDayNum === day.dayNum
-                  ? 'bg-white dark:bg-[#1e1e1e] border-orange-300 dark:border-orange-600/50 shadow-sm'
-                  : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
+                  ? 'bg-orange-50 dark:bg-[#1e1e1e] shadow-none'
+                  : 'bg-transparent hover:bg-slate-50 dark:hover:bg-white/5'
               }`}>
                 {/* Drag handle */}
                 <div className="shrink-0 text-slate-300 dark:text-slate-700 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
@@ -274,15 +274,15 @@ const App: React.FC = () => {
                 </div>
                 {/* Day number badge */}
                 <button onClick={() => handleDaySelect(day.dayNum)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
-                  <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-black ${
+                  <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${
                     day.isHighland
-                      ? (selectedDayNum === day.dayNum ? 'bg-yellow-500 text-slate-950' : 'bg-yellow-100 dark:bg-slate-800 text-yellow-600 dark:text-yellow-500')
-                      : (selectedDayNum === day.dayNum ? 'bg-orange-600 text-white' : 'bg-orange-100 dark:bg-white/10 text-orange-600 dark:text-orange-400')
+                      ? (selectedDayNum === day.dayNum ? 'bg-yellow-500 text-white' : 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-500')
+                      : (selectedDayNum === day.dayNum ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400')
                   }`}>
                     {day.dayNum}
                   </span>
                   <div className="flex-1 min-w-0 flex items-center gap-2">
-                    <h3 className={`font-semibold truncate text-[13px] ${selectedDayNum === day.dayNum ? 'text-slate-950 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                    <h3 className={`font-medium truncate text-[13px] ${selectedDayNum === day.dayNum ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                       {day.title}
                     </h3>
                     {day.companionIds.length > 0 && (
@@ -302,7 +302,7 @@ const App: React.FC = () => {
                 {/* Edit button */}
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditingDay(day); }}
-                  className="shrink-0 p-1 rounded text-slate-400 dark:text-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all opacity-0 group-hover:opacity-100"
+                  className="shrink-0 p-1 rounded text-slate-300 dark:text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-all opacity-0 group-hover:opacity-100"
                   title="Edit this day"
                 >
                   <Pencil size={11} />
@@ -316,7 +316,7 @@ const App: React.FC = () => {
       </div>
 
       {/* ─── Main Content ─── */}
-      <div className="flex-1 relative flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
+      <div className="flex-1 relative flex flex-col bg-[#f7f6f3] dark:bg-[#0f0f0f] overflow-hidden">
 
         {/* Print overlay */}
         {mainView === 'print' && (
@@ -325,8 +325,8 @@ const App: React.FC = () => {
 
         {/* Packing list panel */}
         {mainView === 'packing' && (
-          <div className="absolute inset-0 z-40 bg-white dark:bg-slate-900 overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+          <div className="absolute inset-0 z-40 bg-white dark:bg-[#111] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-white/5 shrink-0">
               <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
                 <ShoppingBag size={14} className="text-blue-500" />
                 PACKING LIST
@@ -343,22 +343,22 @@ const App: React.FC = () => {
         )}
 
         {/* Tab bar */}
-        <div className="absolute top-4 right-4 lg:right-6 z-30 flex items-center gap-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-700/50 p-1 shadow-lg pointer-events-auto">
+        <div className="absolute top-4 right-4 lg:right-6 z-30 flex items-center gap-0.5 bg-white dark:bg-[#1a1a1a] rounded-xl border border-slate-100 dark:border-white/10 p-1 shadow-sm pointer-events-auto">
           <button
             onClick={() => switchView('map')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${mainView === 'map' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${mainView === 'map' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
           >
             <MapPin size={12} /> Map
           </button>
           <button
             onClick={() => switchView('packing')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${mainView === 'packing' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${mainView === 'packing' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
           >
             <ShoppingBag size={12} /> Packing
           </button>
           <button
             onClick={() => switchView('print')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${mainView === 'print' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${mainView === 'print' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
           >
             <Printer size={12} /> Print
           </button>
@@ -369,7 +369,7 @@ const App: React.FC = () => {
           mainView !== 'map' ? 'opacity-0 pointer-events-none' : (isMobile && isSidebarExpanded ? 'opacity-0 scale-95' : 'opacity-100 scale-100')
         }`}>
           <div
-            className={`bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_-8px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-700/50 max-w-4xl pointer-events-auto transition-all duration-300 flex flex-col overflow-hidden`}
+            className={`bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-slate-100 dark:border-white/10 max-w-4xl pointer-events-auto transition-all duration-300 flex flex-col overflow-hidden`}
           >
             {/* ── Minimized pill (always visible) ── */}
             <div
@@ -377,7 +377,7 @@ const App: React.FC = () => {
               onClick={() => setIsCardMinimized(v => !v)}
             >
               {/* Day badge */}
-              <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black text-white ${selectedDay.isHighland ? 'bg-yellow-500' : 'bg-orange-600'}`}>
+              <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white ${selectedDay.isHighland ? 'bg-yellow-500' : 'bg-orange-500'}`}>
                 {selectedDay.dayNum}
               </div>
 
@@ -387,15 +387,15 @@ const App: React.FC = () => {
                   <span className="text-[10px] font-bold text-slate-500 dark:text-slate-500 tabular-nums">{selectedDay.date}</span>
                   {selectedDay.isHighland && <span className="text-[9px] font-black text-yellow-600 dark:text-yellow-500 uppercase">· Mountain</span>}
                 </div>
-                <h2 className="text-[13px] font-black text-slate-950 dark:text-white leading-tight tracking-tight truncate">
+                <h2 className="text-[13px] font-semibold text-slate-900 dark:text-white leading-tight truncate">
                   {selectedDay.title}
                 </h2>
               </div>
 
               {/* Sleep chip */}
-              <div className="hidden sm:flex items-center gap-1.5 shrink-0 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 max-w-[160px]">
-                <Bed size={11} className="text-indigo-500 shrink-0" />
-                <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 truncate">{selectedDay.sleep}</span>
+              <div className="hidden sm:flex items-center gap-1.5 shrink-0 bg-slate-50 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-white/10 max-w-[160px]">
+                <Bed size={11} className="text-slate-400 shrink-0" />
+                <span className="text-[10px] text-slate-500 dark:text-slate-300 truncate">{selectedDay.sleep}</span>
               </div>
 
               {/* Actions */}
@@ -417,7 +417,7 @@ const App: React.FC = () => {
 
             {/* ── Expanded body ── */}
             {!isCardMinimized && (
-              <div className={`border-t border-slate-200 dark:border-slate-800 flex-1 overflow-y-auto ${isMobile ? 'max-h-[55svh]' : 'max-h-[68vh]'}`}>
+              <div className={`border-t border-slate-100 dark:border-white/10 flex-1 overflow-y-auto ${isMobile ? 'max-h-[55svh]' : 'max-h-[68vh]'}`}>
                 <div className="p-4 lg:p-5 space-y-4 lg:space-y-5">
 
                   {/* Train & Timing */}
@@ -436,15 +436,15 @@ const App: React.FC = () => {
                       {/* Terrain & Transport */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <p className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                          <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
                             <Zap size={13} className="text-yellow-500" /> Terrain
                           </p>
-                          <div className="bg-slate-200 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-300 dark:border-slate-700/30">
-                            <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed italic">"{selectedDay.terrain}"</p>
+                          <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-lg border border-slate-100 dark:border-white/5">
+                            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed italic">"{selectedDay.terrain}"</p>
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <p className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                          <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
                             <Compass size={13} className="text-orange-500" /> Transport
                           </p>
                           <div className="flex flex-wrap gap-1.5">
@@ -458,19 +458,19 @@ const App: React.FC = () => {
                       {/* Day Plan — List / Timeline */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <p className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                          <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
                             <Waves size={13} className="text-blue-400" /> Day Plan
                           </p>
-                          <div className="flex items-center bg-slate-200 dark:bg-slate-800 rounded-lg p-0.5 gap-0.5">
+                          <div className="flex items-center bg-slate-100 dark:bg-white/10 rounded-lg p-0.5 gap-0.5">
                             <button
                               onClick={() => setViewMode('list')}
-                              className={`px-2.5 py-1 rounded-md text-[9px] font-bold transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow' : 'text-slate-600 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300'}`}
+                              className={`px-2.5 py-1 rounded-md text-[9px] font-semibold transition-all ${viewMode === 'list' ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
                               List
                             </button>
                             <button
                               onClick={() => setViewMode('timeline')}
-                              className={`px-2.5 py-1 rounded-md text-[9px] font-bold transition-all ${viewMode === 'timeline' ? 'bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow' : 'text-slate-600 dark:text-slate-500 hover:text-slate-950 dark:hover:text-slate-300'}`}
+                              className={`px-2.5 py-1 rounded-md text-[9px] font-semibold transition-all ${viewMode === 'timeline' ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
                               Timeline
                             </button>
@@ -497,11 +497,11 @@ const App: React.FC = () => {
                     </div>
 
                     {/* Right column */}
-                    <div className="space-y-4 lg:border-l lg:border-slate-200 dark:lg:border-slate-800 lg:pl-6">
-                      <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div className="space-y-4 lg:border-l lg:border-slate-100 dark:lg:border-white/5 lg:pl-6">
+                      <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-xl border border-slate-100 dark:border-white/5">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="p-2 bg-indigo-100 dark:bg-indigo-500/10 rounded-lg">
-                            <Bed size={16} className="text-indigo-600 dark:text-indigo-400" />
+                          <div className="p-2 bg-slate-100 dark:bg-white/10 rounded-lg">
+                            <Bed size={16} className="text-slate-500 dark:text-slate-400" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[8px] text-slate-600 dark:text-slate-500 uppercase font-black tracking-widest">Base Camp</p>
@@ -511,13 +511,13 @@ const App: React.FC = () => {
 
                         {/* Booking Reference */}
                         {(selectedDay.bookingRef || selectedDay.bookingUrl || selectedDay.checkInTime || selectedDay.checkOutTime) ? (
-                          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5 space-y-2">
                             <div className="flex items-center gap-1.5">
                               <Ticket size={11} className="text-orange-500 dark:text-orange-400 shrink-0" />
-                              <span className="text-[9px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest">Booking</span>
+                              <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Booking</span>
                             </div>
                             {(selectedDay.checkInTime || selectedDay.checkOutTime) && (
-                              <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800/60 rounded-lg px-3 py-2">
+                              <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-lg px-3 py-2">
                                 {selectedDay.checkInTime && (
                                   <div className="flex-1 text-center">
                                     <p className="text-[8px] font-black text-slate-600 dark:text-slate-500 uppercase tracking-widest">Check-in</p>
@@ -557,7 +557,7 @@ const App: React.FC = () => {
                         ) : (
                           <button
                             onClick={(e) => { e.stopPropagation(); setEditingDay(selectedDay); }}
-                            className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 w-full flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-600 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                            className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5 w-full flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-600 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
                           >
                             <Ticket size={11} />
                             Add booking reference
@@ -573,9 +573,9 @@ const App: React.FC = () => {
                         dayNum={selectedDay.dayNum}
                       />
 
-                      <div className="p-3 bg-yellow-100 dark:bg-yellow-500/5 rounded-xl border border-yellow-300 dark:border-yellow-500/10">
-                        <p className="text-[10px] text-yellow-700 dark:text-yellow-500/70 font-bold uppercase mb-1">Travel Tip</p>
-                        <p className="text-[11px] text-yellow-800 dark:text-slate-400 leading-relaxed">
+                      <div className="p-3 bg-amber-50 dark:bg-amber-500/5 rounded-lg border border-amber-100 dark:border-amber-500/10">
+                        <p className="text-[10px] text-amber-600 dark:text-amber-500/70 font-semibold uppercase tracking-wide mb-1">Travel Tip</p>
+                        <p className="text-[11px] text-amber-800/70 dark:text-slate-400 leading-relaxed">
                           Get a <b>Suica/Pasmo</b> card for seamless transit. July is humid — stay hydrated!
                         </p>
                       </div>
