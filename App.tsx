@@ -69,6 +69,18 @@ const Legend = () => {
   );
 };
 
+// ─── City label extractor ───
+const cityLabel = (day: ItineraryDay): string => {
+  // Prefer arrivalStation from trainInfo (most precise)
+  if (day.trainInfo?.arrivalStation) {
+    return day.trainInfo.arrivalStation.split(' ')[0].toUpperCase();
+  }
+  // Fallback: parse title
+  let t = day.title.replace(/\s*\([^)]*\)/g, '').replace(/\s+with\s+\S+/gi, '').trim();
+  if (t.includes('→')) t = (t.split('→').pop() ?? t).trim();
+  return (t.split(/\s+/)[0] ?? t).toUpperCase();
+};
+
 // ─── App ───
 const App: React.FC = () => {
   const { toggleTheme, theme } = useTheme();
@@ -218,99 +230,187 @@ const App: React.FC = () => {
       )}
 
       {/* ─── Sidebar ─── */}
-      <div className={`fixed lg:relative inset-x-0 bottom-0 lg:inset-auto w-full lg:w-[420px] bg-white dark:bg-[#111] shadow-none flex flex-col z-40 border-r border-slate-100 dark:border-white/5 shrink-0 transition-transform duration-500 ease-in-out h-[90svh] lg:h-full ${
-        isMobile ? (isSidebarExpanded ? 'translate-y-0' : 'translate-y-[calc(90svh-120px)]') : 'translate-y-0'
-      }`}>
-        {/* Header */}
+      <div className={`fixed lg:relative inset-x-0 bottom-0 lg:inset-auto w-full lg:w-[400px] flex flex-col z-40 shrink-0 transition-transform duration-500 ease-in-out h-[90svh] lg:h-full overflow-hidden ${
+        isMobile ? (isSidebarExpanded ? 'translate-y-0' : 'translate-y-[calc(90svh-100px)]') : 'translate-y-0'
+      }`} style={{ backgroundColor: '#0e0e0e' }}>
+
+        {/* ── Transit Header ── */}
         <div
           onClick={isMobile ? () => setIsSidebarExpanded(!isSidebarExpanded) : undefined}
-          className="px-5 py-5 lg:px-6 lg:py-6 bg-white dark:bg-[#0a0a0a] border-b border-slate-100 dark:border-white/5 cursor-pointer lg:cursor-default shrink-0 flex items-center justify-between"
+          className="shrink-0 cursor-pointer lg:cursor-default"
+          style={{ backgroundColor: '#0e0e0e', borderBottom: '2px solid #d02810', padding: '16px 36px 14px' }}
         >
-          <div>
-            <h1 className="text-xl lg:text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
-              JAPAN <span className="text-orange-500">EXPEDITION</span>
-            </h1>
-            <p className="text-slate-400 dark:text-slate-500 text-[9px] lg:text-[10px] mt-1 uppercase tracking-[0.25em] font-semibold flex items-center gap-2">
-              <Compass size={12} className="text-orange-400" />
-              July 2026 · {days.length} Days · {companions.length > 0 ? `${companions.length} Traveler${companions.length > 1 ? 's' : ''}` : 'Solo Journey'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="bg-slate-100 dark:bg-white/10 p-2 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors"
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            {isMobile && (
-              <div className="bg-slate-100 dark:bg-white/10 p-2 rounded-full text-slate-500 dark:text-slate-400">
-                {isSidebarExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-transit-city leading-none" style={{ fontSize: '42px', lineHeight: 1 }}>
+                <span style={{ color: '#4e4c48' }}>TRIP </span>
+                <span style={{ color: '#f2f1ed' }}>JPN</span>
               </div>
-            )}
+              <div className="font-transit-mono mt-2" style={{ fontSize: '8px', color: '#3a3936', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                Japan Cultural Expedition · July 2026
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
+                style={{ background: 'rgba(255,255,255,0.07)', borderRadius: '50%', padding: '7px', color: '#888' }}
+                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+              </button>
+              {isMobile && (
+                <div style={{ background: 'rgba(255,255,255,0.07)', borderRadius: '50%', padding: '7px', color: '#666' }}>
+                  {isSidebarExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Timeline */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5 bg-white dark:bg-[#111]">
-          {days.map((day, idx) => (
-            <div
-              key={`${day.dayNum}-${day.title}`}
-              draggable
-              onDragStart={() => handleDragStart(idx)}
-              onDragOver={(e) => handleDragOver(e, idx)}
-              onDrop={() => handleDrop(idx)}
-              onDragEnd={handleDragEnd}
-              className={`transition-all duration-150 ${dragOverIdx === idx && dragIdx !== idx ? 'border-t-2 border-orange-500 pt-0.5' : ''} ${dragIdx === idx ? 'opacity-40 scale-95' : ''}`}
-            >
-              <div className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-2 group cursor-pointer ${
-                selectedDayNum === day.dayNum
-                  ? 'bg-orange-50 dark:bg-[#1e1e1e] shadow-none'
-                  : 'bg-transparent hover:bg-slate-50 dark:hover:bg-white/5'
-              }`}>
-                {/* Drag handle */}
-                <div className="shrink-0 text-slate-300 dark:text-slate-700 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
-                  <GripVertical size={12} />
-                </div>
-                {/* Day number badge */}
-                <button onClick={() => handleDaySelect(day.dayNum)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
-                  <span className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${
-                    day.isHighland
-                      ? (selectedDayNum === day.dayNum ? 'bg-yellow-500 text-white' : 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-500')
-                      : (selectedDayNum === day.dayNum ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400')
-                  }`}>
-                    {day.dayNum}
-                  </span>
-                  <div className="flex-1 min-w-0 flex items-center gap-2">
-                    <h3 className={`font-medium truncate text-[13px] ${selectedDayNum === day.dayNum ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                      {day.title}
-                    </h3>
-                    {day.companionIds.length > 0 && (
-                      <div className="flex -space-x-1 shrink-0">
-                        {companions.filter(c => day.companionIds.includes(c.id)).slice(0, 3).map(c => (
-                          <div key={c.id} className="w-3.5 h-3.5 rounded-full text-[6px] flex items-center justify-center border border-white dark:border-slate-900" style={{ backgroundColor: c.color }}>
-                            {c.avatar}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+        {/* ── Day List ── */}
+        <div className="flex-1 overflow-y-auto" style={{ backgroundColor: '#141414' }}>
+          {days.map((day, idx) => {
+            const isActive = selectedDayNum === day.dayNum;
+            const city = cityLabel(day);
+            const dep = day.trainInfo?.departureStation;
+            const arr = day.trainInfo?.arrivalStation;
+
+            if (isActive) {
+              /* ── ACTIVE: full red block ── */
+              return (
+                <div
+                  key={`${day.dayNum}-active`}
+                  className="relative cursor-pointer select-none"
+                  style={{ backgroundColor: '#d02810' }}
+                  onClick={() => { setIsCardMinimized(v => !v); }}
+                >
+                  {/* Left accent bar */}
+                  <div className="absolute left-0 top-0 bottom-0" style={{ width: '3px', backgroundColor: '#ff5a32' }} />
+
+                  <div style={{ padding: '14px 36px 0 36px' }}>
+                    {/* num + date */}
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-transit-mono" style={{ fontSize: '10px', color: 'rgba(255,175,155,0.9)' }}>
+                        {String(day.dayNum).padStart(2, '0')}
+                      </span>
+                      <span className="font-transit-mono" style={{ fontSize: '10px', fontWeight: 700, color: '#fff' }}>
+                        {day.date}
+                      </span>
+                      {day.isHighland && (
+                        <span className="font-transit-mono" style={{ fontSize: '8px', color: 'rgba(255,210,100,0.85)', letterSpacing: '0.15em' }}>· HIGHLAND</span>
+                      )}
+                    </div>
+                    {/* Mega city name */}
+                    <div className="font-transit-city" style={{ fontSize: '88px', lineHeight: 0.9, color: '#fff', marginLeft: '-2px', letterSpacing: '-0.02em' }}>
+                      {city}
+                    </div>
+                    {/* Location sub-label */}
+                    <div className="font-transit-mono" style={{ fontSize: '8px', color: 'rgba(255,185,165,0.85)', marginTop: '10px', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                      {city}, JAPAN
+                    </div>
                   </div>
-                  <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-500 font-mono tabular-nums">
-                    {day.date}
+
+                  {/* Departure / Arrival card */}
+                  <div style={{ margin: '12px 36px 18px', backgroundColor: '#faf9f7' }}>
+                    <div className="flex">
+                      <div className="flex-1" style={{ padding: '10px 14px', borderRight: '1px solid #c8c4be' }}>
+                        <div className="font-transit-mono" style={{ fontSize: '7px', fontWeight: 700, color: '#958c84', marginBottom: '4px', letterSpacing: '0.1em' }}>DEPARTURE:</div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#0e0e0e', textTransform: 'uppercase', letterSpacing: '0.01em' }}>
+                          {dep ?? '—'}
+                        </div>
+                      </div>
+                      <div className="flex-1" style={{ padding: '10px 14px' }}>
+                        <div className="font-transit-mono" style={{ fontSize: '7px', fontWeight: 700, color: '#958c84', marginBottom: '4px', letterSpacing: '0.1em' }}>ARRIVAL:</div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#0e0e0e', textTransform: 'uppercase', letterSpacing: '0.01em' }}>
+                          {arr ?? day.sleep}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Edit icon */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditingDay(day); }}
+                    className="absolute top-3 right-3"
+                    style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '4px', padding: '4px', color: 'rgba(255,220,210,0.7)' }}
+                    title="Edit day"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                </div>
+              );
+            }
+
+            /* ── INACTIVE ROW ── */
+            const bg  = day.isHighland ? '#1a1c22' : '#141414';
+            const rule = day.isHighland ? '#282a32' : '#222222';
+            const badgeBg   = day.isHighland ? '#bc9224' : '#2e2e2e';
+            const badgeTxt  = day.isHighland ? '#0e0e0e' : '#888';
+            const cityColor = day.isHighland ? '#bc9224' : '#dadad8';
+            const dateColor = day.isHighland ? '#948c48' : '#484644';
+
+            return (
+              <div
+                key={`${day.dayNum}-${day.title}`}
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragOver={(e) => handleDragOver(e, idx)}
+                onDrop={() => handleDrop(idx)}
+                onDragEnd={handleDragEnd}
+                onClick={() => handleDaySelect(day.dayNum)}
+                className="cursor-pointer group transition-colors"
+                style={{
+                  backgroundColor: bg,
+                  borderTop: `1px solid ${rule}`,
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '36px',
+                  paddingRight: '36px',
+                  ...(dragOverIdx === idx && dragIdx !== idx ? { borderTop: '2px solid #d02810' } : {}),
+                  ...(dragIdx === idx ? { opacity: 0.4 } : {}),
+                }}
+              >
+                {/* Drag handle (hidden until hover) */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity mr-2" style={{ color: '#333' }}>
+                  <GripVertical size={11} />
+                </div>
+
+                {/* Badge */}
+                <div className="shrink-0 flex items-center justify-center font-transit-mono"
+                     style={{ width: '28px', height: '20px', backgroundColor: badgeBg, fontSize: '8px', fontWeight: 700, color: badgeTxt }}>
+                  {String(day.dayNum).padStart(2, '0')}
+                </div>
+
+                {/* Date */}
+                <span className="font-transit-mono ml-2.5 shrink-0" style={{ fontSize: '9px', color: dateColor }}>
+                  {day.date}
+                </span>
+
+                {/* City name */}
+                <span className="font-transit-city ml-3 shrink-0" style={{ fontSize: '14px', color: cityColor, textTransform: 'uppercase' }}>
+                  {city}
+                </span>
+
+                {/* Route meta — right */}
+                {dep && arr && (
+                  <span className="font-transit-mono ml-auto shrink-0" style={{ fontSize: '7px', color: '#3a3836', whiteSpace: 'nowrap' }}>
+                    {dep.slice(0, 9).toUpperCase()} → {arr.slice(0, 9).toUpperCase()}
                   </span>
-                </button>
-                {/* Edit button */}
+                )}
+
+                {/* Edit on hover */}
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditingDay(day); }}
-                  className="shrink-0 p-1 rounded text-slate-300 dark:text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-all opacity-0 group-hover:opacity-100"
-                  title="Edit this day"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0"
+                  style={{ padding: '3px', borderRadius: '3px', color: '#555' }}
+                  title="Edit day"
                 >
-                  <Pencil size={11} />
+                  <Pencil size={10} />
                 </button>
-                {selectedDayNum === day.dayNum && <ChevronRight className="text-orange-500 shrink-0" size={14} />}
               </div>
-            </div>
-          ))}
+            );
+          })}
           <div className="h-20 lg:hidden" />
         </div>
       </div>
