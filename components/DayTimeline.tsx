@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Train, MapPin, Bed, LogIn, Plus, Check, X, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { ItineraryDay, Activity, TrainInfo } from '../types';
+import { useTheme } from '../ThemeContext';
 
 export type ViewMode = 'list' | 'timeline';
 
@@ -29,15 +30,8 @@ const KIND_ORDER: Record<string, number> = {
 function buildEvents(day: ItineraryDay): TLEvent[] {
   const events: TLEvent[] = [];
 
-  const hasDep =
-    day.departureTime ||
-    day.trainInfo?.departureStation ||
-    day.trainInfo?.departureTime;
-
-  const hasArr =
-    day.arrivalTime ||
-    day.trainInfo?.arrivalStation ||
-    day.trainInfo?.arrivalTime;
+  const hasDep = day.departureTime || day.trainInfo?.departureStation || day.trainInfo?.departureTime;
+  const hasArr = day.arrivalTime || day.trainInfo?.arrivalStation || day.trainInfo?.arrivalTime;
 
   if (hasDep) {
     events.push({
@@ -70,65 +64,49 @@ function buildEvents(day: ItineraryDay): TLEvent[] {
   return events.sort((a, b) => {
     if (a.kind === 'sleep') return 1;
     if (b.kind === 'sleep') return -1;
-
-    const aT =
-      a.kind === 'activity'
-        ? toMins(a.time, 50000 + a.idx)
-        : toMins((a as { time?: string }).time, 49000);
-    const bT =
-      b.kind === 'activity'
-        ? toMins(b.time, 50000 + b.idx)
-        : toMins((b as { time?: string }).time, 49000);
-
+    const aT = a.kind === 'activity' ? toMins(a.time, 50000 + a.idx) : toMins((a as { time?: string }).time, 49000);
+    const bT = b.kind === 'activity' ? toMins(b.time, 50000 + b.idx) : toMins((b as { time?: string }).time, 49000);
     if (aT !== bT) return aT - bT;
     return (KIND_ORDER[a.kind] ?? 5) - (KIND_ORDER[b.kind] ?? 5);
   });
 }
 
-// ─── Activity dot colours cycling ───
-const DOT_COLORS = [
-  'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.7)]',
-  'bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.6)]',
-  'bg-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.5)]',
-  'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.4)]',
-];
-
-// ─── Shared inline-edit row component ───
-interface EditRowProps {
-  text: string;
-  time: string;
-  onTextChange: (v: string) => void;
-  onTimeChange: (v: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onDelete: () => void;
-  autoFocus?: boolean;
-}
-const EditRow: React.FC<EditRowProps> = ({
-  text, time, onTextChange, onTimeChange, onSave, onCancel, onDelete, autoFocus,
-}) => (
-  <div className="flex gap-1.5 items-center w-full">
-    <input
-      type="time"
-      value={time}
-      onChange={e => onTimeChange(e.target.value)}
-      className="w-[82px] shrink-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-1.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-blue-500/50"
-    />
-    <input
-      type="text"
-      value={text}
-      onChange={e => onTextChange(e.target.value)}
-      onKeyDown={e => {
-        if (e.key === 'Enter') onSave();
-        if (e.key === 'Escape') onCancel();
+// ─── Time badge ───
+const TimeBadge: React.FC<{ time?: string; label?: string; isDark: boolean }> = ({ time, label, isDark }) => {
+  const content = time ?? label ?? '';
+  if (!content) return null;
+  return (
+    <div
+      className="font-transit-mono shrink-0 flex items-center justify-center tabular-nums"
+      style={{
+        fontSize: '8px',
+        fontWeight: 700,
+        color: isDark ? '#888' : '#7a7876',
+        backgroundColor: isDark ? '#252525' : '#e8e6e2',
+        padding: '2px 5px',
+        letterSpacing: '0.04em',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
+        minWidth: '42px',
+        textAlign: 'center',
       }}
-      placeholder="Activity description…"
-      className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-[11px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-blue-500/50"
-      autoFocus={autoFocus}
-    />
-    <button onClick={onSave} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all shrink-0"><Check size={13} /></button>
-    <button onClick={onCancel} className="p-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shrink-0"><X size={13} /></button>
-    <button onClick={onDelete} className="p-1.5 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-200 dark:hover:bg-orange-800/50 transition-all shrink-0"><Trash2 size={13} /></button>
+    >
+      {content}
+    </div>
+  );
+};
+
+// ─── Spine node ───
+const SpineNode: React.FC<{ filled: boolean; color: string; isLast: boolean; spineColor: string }> = ({ filled, color, isLast, spineColor }) => (
+  <div className="flex flex-col items-center" style={{ width: '20px', flexShrink: 0 }}>
+    <div style={{
+      width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0, marginTop: '3px', zIndex: 1, position: 'relative',
+      backgroundColor: filled ? color : 'transparent',
+      border: `2px solid ${color}`,
+    }} />
+    {!isLast && (
+      <div style={{ flex: 1, width: '1px', backgroundColor: spineColor, minHeight: '12px' }} />
+    )}
   </div>
 );
 
@@ -141,6 +119,9 @@ interface DayTimelineProps {
 
 // ─── Component ───
 const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
   const [editTime, setEditTime] = useState('');
@@ -149,11 +130,34 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities
   const [newTime, setNewTime] = useState('');
   const addInputRef = useRef<HTMLInputElement>(null);
 
-  // Drag state
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dropTargetIdx, setDropTargetIdx] = useState<number | null>(null);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+
+  const TEAL  = '#0d9488';
+  const RED   = '#d02810';
+  const GREEN = '#16a34a';
+
+  const cardBase: React.CSSProperties = {
+    flex: 1,
+    marginLeft: '8px',
+    marginBottom: '4px',
+    fontSize: '11px',
+    lineHeight: '1.4',
+  };
+
+  const tc = {
+    bg:          isDark ? '#141414' : '#ffffff',
+    rule:        isDark ? '#252525' : '#eeece8',
+    text:        isDark ? '#d8d6d2' : '#1a1816',
+    muted:       isDark ? '#585654' : '#7a7876',
+    actBg:       isDark ? '#1e1e1e' : '#f9f8f6',
+    actBorder:   isDark ? '#2c2c2c' : '#e4e2de',
+    inputBg:     isDark ? '#1a1a1a' : '#f5f4f0',
+    inputBorder: isDark ? '#333'    : '#d8d6d2',
+    inputText:   isDark ? '#d8d6d2' : '#1a1816',
+  };
 
   const startEdit = (idx: number) => {
     setEditingIdx(idx);
@@ -170,54 +174,32 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities
     setEditingIdx(null);
   };
 
-  const cancelEdit = () => {
-    setEditingIdx(null);
-    setEditText('');
-    setEditTime('');
-  };
-
-  const deleteActivity = (idx: number) => {
-    onUpdateActivities(day.activities.filter((_, i) => i !== idx));
-    setEditingIdx(null);
-  };
-
+  const cancelEdit = () => { setEditingIdx(null); setEditText(''); setEditTime(''); };
+  const deleteActivity = (idx: number) => { onUpdateActivities(day.activities.filter((_, i) => i !== idx)); setEditingIdx(null); };
   const addActivity = () => {
     if (!newText.trim()) return;
     onUpdateActivities([...day.activities, { text: newText.trim(), time: newTime || undefined }]);
-    setNewText('');
-    setNewTime('');
-    setIsAdding(false);
+    setNewText(''); setNewTime(''); setIsAdding(false);
   };
+  const beginAdding = () => { setIsAdding(true); setTimeout(() => addInputRef.current?.focus(), 50); };
 
-  const beginAdding = () => {
-    setIsAdding(true);
-    setTimeout(() => addInputRef.current?.focus(), 50);
-  };
-
-  // ── Drag handlers ──
-  const handleDragStart = (idx: number) => {
-    dragItem.current = idx;
-    setDraggedIdx(idx);
-  };
-
-  const handleDragEnter = (idx: number) => {
-    dragOverItem.current = idx;
-    setDropTargetIdx(idx);
-  };
-
+  const handleDragStart = (idx: number) => { dragItem.current = idx; setDraggedIdx(idx); };
+  const handleDragEnter = (idx: number) => { dragOverItem.current = idx; setDropTargetIdx(idx); };
   const handleDragEnd = () => {
-    const from = dragItem.current;
-    const to = dragOverItem.current;
+    const from = dragItem.current, to = dragOverItem.current;
     if (from !== null && to !== null && from !== to) {
       const reordered = [...day.activities];
       const [moved] = reordered.splice(from, 1);
       reordered.splice(to, 0, moved);
       onUpdateActivities(reordered);
     }
-    dragItem.current = null;
-    dragOverItem.current = null;
-    setDraggedIdx(null);
-    setDropTargetIdx(null);
+    dragItem.current = null; dragOverItem.current = null;
+    setDraggedIdx(null); setDropTargetIdx(null);
+  };
+
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: tc.inputBg, border: `1px solid ${tc.inputBorder}`, color: tc.inputText,
+    fontSize: '11px', padding: '4px 8px', outline: 'none', borderRadius: 0,
   };
 
   // ──────────────────────────────────────────────
@@ -225,7 +207,7 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities
   // ──────────────────────────────────────────────
   if (mode === 'list') {
     return (
-      <div className="space-y-1.5">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
         {day.activities.map((act, idx) => (
           <div
             key={idx}
@@ -234,90 +216,63 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities
             onDragEnter={() => handleDragEnter(idx)}
             onDragEnd={handleDragEnd}
             onDragOver={e => e.preventDefault()}
-            className={`group flex items-center gap-2 rounded-lg transition-all duration-150 ${
-              draggedIdx === idx ? 'opacity-40 scale-[0.98]' : 'opacity-100'
-            } ${
-              dropTargetIdx === idx && draggedIdx !== idx
-                ? 'ring-2 ring-blue-400 dark:ring-blue-500 bg-blue-50/50 dark:bg-blue-900/10'
-                : ''
-            }`}
+            className="group"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              opacity: draggedIdx === idx ? 0.4 : 1,
+              borderTop: dropTargetIdx === idx && draggedIdx !== idx ? `2px solid ${RED}` : undefined,
+            }}
           >
             {editingIdx === idx ? (
-              <EditRow
-                text={editText}
-                time={editTime}
-                onTextChange={setEditText}
-                onTimeChange={setEditTime}
-                onSave={saveEdit}
-                onCancel={cancelEdit}
-                onDelete={() => deleteActivity(idx)}
-                autoFocus
-              />
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flex: 1 }}>
+                <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} style={{ ...inputStyle, width: '78px', flexShrink: 0 }} />
+                <input type="text" value={editText} onChange={e => setEditText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                  style={{ ...inputStyle, flex: 1 }} autoFocus
+                />
+                <button onClick={saveEdit} style={{ padding: '4px 8px', backgroundColor: GREEN, color: '#fff', fontSize: '10px' }}><Check size={11} /></button>
+                <button onClick={cancelEdit} style={{ padding: '4px 8px', backgroundColor: tc.actBg, color: tc.muted, fontSize: '10px' }}><X size={11} /></button>
+                <button onClick={() => deleteActivity(idx)} style={{ padding: '4px 8px', backgroundColor: tc.actBg, color: RED, fontSize: '10px' }}><Trash2 size={11} /></button>
+              </div>
             ) : (
               <>
-                {/* Drag handle */}
-                <div
-                  className="shrink-0 cursor-grab active:cursor-grabbing text-slate-300 dark:text-slate-700 hover:text-slate-500 dark:hover:text-slate-400 transition-colors touch-none"
-                  title="Drag to reorder"
-                >
-                  <GripVertical size={14} />
+                <div className="shrink-0 cursor-grab" style={{ color: isDark ? '#333' : '#c0bebb' }}>
+                  <GripVertical size={12} />
                 </div>
-
-                {act.time && (
-                  <span className="shrink-0 text-[10px] font-black tabular-nums text-blue-600 dark:text-blue-400 w-[38px] text-right">
-                    {act.time}
-                  </span>
-                )}
+                {act.time && <TimeBadge time={act.time} isDark={isDark} />}
                 <div
-                  className={`flex-1 text-[11px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/40 hover:bg-slate-200 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700/20 transition-all leading-snug cursor-pointer ${!act.time ? 'ml-0' : ''}`}
                   onClick={() => startEdit(idx)}
+                  className="group-hover:opacity-100 cursor-pointer"
+                  style={{
+                    flex: 1, fontSize: '11px', color: tc.text,
+                    backgroundColor: tc.actBg, border: `1px solid ${tc.actBorder}`,
+                    padding: '5px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
+                  }}
                 >
-                  {act.text}
+                  <span>{act.text}</span>
+                  <Pencil size={10} style={{ color: tc.muted, flexShrink: 0 }} />
                 </div>
-                <button
-                  onClick={() => startEdit(idx)}
-                  className="shrink-0 p-1 text-slate-400 dark:text-slate-700 hover:text-blue-500 dark:hover:text-blue-400 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <Pencil size={12} />
-                </button>
               </>
             )}
           </div>
         ))}
 
-        {/* Add row */}
         {isAdding ? (
-          <div className="flex gap-1.5 items-center mt-1">
-            <input
-              type="time"
-              value={newTime}
-              onChange={e => setNewTime(e.target.value)}
-              className="w-[82px] shrink-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-1.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-blue-500/50"
-            />
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginTop: '4px' }}>
+            <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ ...inputStyle, width: '78px', flexShrink: 0 }} />
             <input
               ref={addInputRef}
-              type="text"
-              value={newText}
-              onChange={e => setNewText(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') addActivity();
-                if (e.key === 'Escape') { setIsAdding(false); setNewText(''); setNewTime(''); }
-              }}
+              type="text" value={newText} onChange={e => setNewText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') addActivity(); if (e.key === 'Escape') { setIsAdding(false); setNewText(''); setNewTime(''); } }}
               placeholder="Activity description…"
-              className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-[11px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-blue-500/50"
-              autoFocus
+              style={{ ...inputStyle, flex: 1 }} autoFocus
             />
-            <button onClick={addActivity} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all shrink-0"><Check size={13} /></button>
-            <button
-              onClick={() => { setIsAdding(false); setNewText(''); setNewTime(''); }}
-              className="p-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shrink-0"
-            >
-              <X size={13} />
-            </button>
+            <button onClick={addActivity} style={{ padding: '4px 8px', backgroundColor: GREEN, color: '#fff' }}><Check size={11} /></button>
+            <button onClick={() => { setIsAdding(false); setNewText(''); setNewTime(''); }} style={{ padding: '4px 8px', backgroundColor: tc.actBg, color: tc.muted }}><X size={11} /></button>
           </div>
         ) : (
-          <button onClick={beginAdding} className="flex items-center gap-2 mt-1 ml-6 text-[11px] font-bold text-slate-500 dark:text-slate-600 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-            <Plus size={13} /> Add activity
+          <button onClick={beginAdding} className="font-transit-mono flex items-center gap-1.5" style={{ fontSize: '8px', color: TEAL, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '6px', padding: '4px 0' }}>
+            <Plus size={11} /> Add Activity
           </button>
         )}
       </div>
@@ -325,188 +280,165 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities
   }
 
   // ──────────────────────────────────────────────
-  // TIMELINE MODE — unified chronological view
+  // TIMELINE MODE — Station Record aesthetic
   // ──────────────────────────────────────────────
   const events = buildEvents(day);
   const total = events.length;
 
   return (
-    <div className="space-y-0">
+    <div>
       {events.map((evt, evtIdx) => {
         const isLast = evtIdx === total - 1;
 
-        // ── Departure ──
+        // ── Departure ── green card, filled teal node
         if (evt.kind === 'depart') {
           return (
-            <div key={`depart-${evtIdx}`} className="flex items-stretch gap-0">
-              <div className="w-14 shrink-0 flex flex-col items-end pr-3 pt-2.5">
-                {evt.time && (
-                  <span className="text-[11px] font-black tabular-nums text-emerald-600 dark:text-emerald-400 leading-none">
-                    {evt.time}
-                  </span>
-                )}
+            <div key={`depart-${evtIdx}`} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+              <div style={{ width: '50px', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: '8px', paddingTop: '2px' }}>
+                <TimeBadge time={evt.time} isDark={isDark} />
               </div>
-              <div className="flex flex-col items-center w-5 shrink-0">
-                <div className="mt-2.5 w-2.5 h-2.5 rounded-full shrink-0 z-10 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] ring-2 ring-white dark:ring-slate-900" />
-                {!isLast && <div className="flex-1 w-px bg-gradient-to-b from-emerald-400/40 dark:from-emerald-600/40 to-slate-200/20 dark:to-slate-800/20 mt-1" />}
-              </div>
-              <div className="flex-1 mb-1.5 ml-2 text-[11px] bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800/30">
-                <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
-                  <Train size={11} />
-                  <span>Depart{evt.station ? ` · ${evt.station}` : ''}</span>
+              <SpineNode filled color={GREEN} isLast={isLast} spineColor={TEAL} />
+              <div style={{
+                ...cardBase,
+                backgroundColor: isDark ? '#0f1f0e' : '#f0fdf4',
+                border: `1px solid ${isDark ? '#1a3a1a' : '#bbf7d0'}`,
+                borderLeft: `3px solid ${GREEN}`,
+                padding: '6px 10px',
+              }}>
+                <div className="font-transit-mono" style={{ fontSize: '9px', fontWeight: 700, color: GREEN, letterSpacing: '0.12em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Train size={10} />
+                  DEPART{evt.station ? `: ${evt.station}` : ''}
                 </div>
                 {evt.trainInfo?.trainName && (
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-700 mt-0.5">
-                    {evt.trainInfo.trainName}
-                    {evt.trainInfo.trainNumber ? ` ${evt.trainInfo.trainNumber}` : ''}
+                  <div className="font-transit-mono" style={{ fontSize: '8px', color: isDark ? '#2a7a3a' : '#4a8a5a', marginTop: '2px' }}>
+                    {evt.trainInfo.trainName}{evt.trainInfo.trainNumber ? ` ${evt.trainInfo.trainNumber}` : ''}
                     {evt.trainInfo.carNumber ? ` · Car ${evt.trainInfo.carNumber}` : ''}
                     {evt.trainInfo.seatNumber ? ` · Seat ${evt.trainInfo.seatNumber}` : ''}
-                  </p>
+                  </div>
                 )}
               </div>
             </div>
           );
         }
 
-        // ── Arrival ──
+        // ── Arrival ── red card, filled teal node
         if (evt.kind === 'arrive') {
           return (
-            <div key={`arrive-${evtIdx}`} className="flex items-stretch gap-0">
-              <div className="w-14 shrink-0 flex flex-col items-end pr-3 pt-2.5">
-                {evt.time && (
-                  <span className="text-[11px] font-black tabular-nums text-orange-600 dark:text-orange-400 leading-none">
-                    {evt.time}
-                  </span>
-                )}
+            <div key={`arrive-${evtIdx}`} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+              <div style={{ width: '50px', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: '8px', paddingTop: '2px' }}>
+                <TimeBadge time={evt.time} isDark={isDark} />
               </div>
-              <div className="flex flex-col items-center w-5 shrink-0">
-                <div className="mt-2.5 w-2.5 h-2.5 rounded-full shrink-0 z-10 bg-orange-500 shadow-[0_0_8px_rgba(234,88,12,0.8)] ring-2 ring-white dark:ring-slate-900" />
-                {!isLast && <div className="flex-1 w-px bg-gradient-to-b from-orange-400/40 dark:from-orange-600/40 to-slate-200/20 dark:to-slate-800/20 mt-1" />}
-              </div>
-              <div className="flex-1 mb-1.5 ml-2 text-[11px] bg-orange-50 dark:bg-orange-950/30 px-3 py-2 rounded-lg border border-orange-200 dark:border-orange-800/30">
-                <div className="flex items-center gap-1.5 text-orange-700 dark:text-orange-400 font-bold">
-                  <MapPin size={11} />
-                  <span>Arrive{evt.station ? ` · ${evt.station}` : ''}</span>
+              <SpineNode filled color={RED} isLast={isLast} spineColor={TEAL} />
+              <div style={{
+                ...cardBase,
+                backgroundColor: RED,
+                border: `1px solid ${isDark ? '#a02008' : '#c02008'}`,
+                padding: '6px 10px',
+              }}>
+                <div className="font-transit-mono" style={{ fontSize: '9px', fontWeight: 700, color: '#fff', letterSpacing: '0.12em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <MapPin size={10} />
+                  ARRIVE{evt.station ? `: ${evt.station}` : ''}
                 </div>
               </div>
             </div>
           );
         }
 
-        // ── Check-in ──
+        // ── Check-in ── orange-accented, filled node
         if (evt.kind === 'checkin') {
           return (
-            <div key={`checkin-${evtIdx}`} className="flex items-stretch gap-0">
-              <div className="w-14 shrink-0 flex flex-col items-end pr-3 pt-2.5">
-                {evt.time && (
-                  <span className="text-[11px] font-black tabular-nums text-orange-600 dark:text-orange-400 leading-none">
-                    {evt.time}
-                  </span>
-                )}
+            <div key={`checkin-${evtIdx}`} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+              <div style={{ width: '50px', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: '8px', paddingTop: '2px' }}>
+                <TimeBadge time={evt.time} isDark={isDark} />
               </div>
-              <div className="flex flex-col items-center w-5 shrink-0">
-                <div className="mt-2.5 w-2.5 h-2.5 rounded-full shrink-0 z-10 bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] ring-2 ring-white dark:ring-slate-900" />
-                {!isLast && <div className="flex-1 w-px bg-gradient-to-b from-orange-400/40 dark:from-orange-600/40 to-slate-200/20 dark:to-slate-800/20 mt-1" />}
-              </div>
-              <div className="flex-1 mb-1.5 ml-2 text-[11px] bg-orange-50 dark:bg-orange-950/30 px-3 py-2 rounded-lg border border-orange-200 dark:border-orange-800/30">
-                <div className="flex items-center gap-1.5 text-orange-700 dark:text-orange-400 font-bold">
-                  <LogIn size={11} />
-                  <span>Check-in</span>
+              <SpineNode filled color="#ea580c" isLast={isLast} spineColor={TEAL} />
+              <div style={{
+                ...cardBase,
+                backgroundColor: isDark ? '#1f1208' : '#fff7ed',
+                border: `1px solid ${isDark ? '#3a2010' : '#fed7aa'}`,
+                borderLeft: '3px solid #ea580c',
+                padding: '6px 10px',
+              }}>
+                <div className="font-transit-mono" style={{ fontSize: '9px', fontWeight: 700, color: '#ea580c', letterSpacing: '0.12em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <LogIn size={10} />
+                  CHECK-IN
                 </div>
-                <p className="text-[10px] text-orange-600 dark:text-orange-700 mt-0.5 truncate">{evt.hotel}</p>
+                <div style={{ fontSize: '10px', color: isDark ? '#b87040' : '#9a4a18', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.hotel}</div>
               </div>
             </div>
           );
         }
 
-        // ── Sleep / Overnight ──
+        // ── Sleep ── teal node, plain card
         if (evt.kind === 'sleep') {
           return (
-            <div key={`sleep-${evtIdx}`} className="flex items-stretch gap-0">
-              <div className="w-14 shrink-0 flex flex-col items-end pr-3 pt-2.5">
-                <span className="text-[9px] font-black text-slate-500 dark:text-slate-600 leading-none uppercase tracking-wide">
-                  night
-                </span>
+            <div key={`sleep-${evtIdx}`} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+              <div style={{ width: '50px', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: '8px', paddingTop: '2px' }}>
+                <TimeBadge label="NIGHT" isDark={isDark} />
               </div>
-              <div className="flex flex-col items-center w-5 shrink-0">
-                <div className="mt-2.5 w-2.5 h-2.5 rounded-full shrink-0 z-10 bg-indigo-400 dark:bg-indigo-900 ring-2 ring-indigo-200 dark:ring-indigo-700/40" />
-              </div>
-              <div className="flex-1 mb-1.5 ml-2 text-[11px] bg-indigo-50 dark:bg-indigo-950/20 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/20">
-                <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-400 font-bold">
-                  <Bed size={11} />
-                  <span className="truncate">{evt.hotel}</span>
+              <SpineNode filled color={TEAL} isLast spineColor={TEAL} />
+              <div style={{
+                ...cardBase,
+                backgroundColor: isDark ? '#0f1e1e' : '#f0fdfa',
+                border: `1px solid ${isDark ? '#1a3838' : '#99f6e4'}`,
+                borderLeft: `3px solid ${TEAL}`,
+                padding: '6px 10px',
+              }}>
+                <div className="font-transit-mono" style={{ fontSize: '9px', fontWeight: 700, color: TEAL, letterSpacing: '0.12em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Bed size={10} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.hotel}</span>
                 </div>
               </div>
             </div>
           );
         }
 
-        // ── Activity ──
+        // ── Activity ── white/light card, empty teal circle
         if (evt.kind === 'activity') {
           const actIdx = evt.idx;
-          const dotColor = DOT_COLORS[actIdx % DOT_COLORS.length];
-
           return (
-            <div key={`act-${actIdx}`} className="flex items-stretch gap-0 group">
-              {/* Left: time / edit time input */}
-              <div className="w-14 shrink-0 flex flex-col items-end pr-3 pt-2.5">
+            <div key={`act-${actIdx}`} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }} className="group">
+              {/* Left: time badge or edit input */}
+              <div style={{ width: '50px', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: '8px', paddingTop: '2px' }}>
                 {editingIdx === actIdx ? (
                   <input
-                    type="time"
-                    value={editTime}
-                    onChange={e => setEditTime(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-1 py-0.5 text-[9px] text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-blue-500/50"
+                    type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
+                    style={{ ...inputStyle, width: '42px', fontSize: '9px', padding: '2px 4px' }}
                   />
-                ) : evt.time ? (
-                  <span className="text-[11px] font-black tabular-nums text-blue-600 dark:text-blue-400 leading-none">
-                    {evt.time}
-                  </span>
                 ) : (
-                  <span className="text-[10px] font-black text-slate-400 dark:text-slate-700 tabular-nums leading-none">
-                    {String(actIdx + 1).padStart(2, '0')}
-                  </span>
+                  <TimeBadge time={evt.time} label={!evt.time ? String(actIdx + 1).padStart(2, '0') : undefined} isDark={isDark} />
                 )}
               </div>
 
-              {/* Centre: dot + spine */}
-              <div className="flex flex-col items-center w-5 shrink-0">
-                <div
-                  className={`mt-2.5 w-2.5 h-2.5 rounded-full shrink-0 z-10 ${dotColor} ring-2 ring-white dark:ring-slate-900 transition-transform group-hover:scale-125`}
-                />
-                {!isLast && (
-                  <div className="flex-1 w-px bg-gradient-to-b from-slate-300/50 dark:from-slate-600/50 to-slate-200/20 dark:to-slate-800/20 mt-1" />
-                )}
-              </div>
+              {/* Spine node */}
+              <SpineNode filled={false} color={TEAL} isLast={isLast} spineColor={TEAL} />
 
-              {/* Right: card or inline edit */}
-              <div className="flex-1 mb-1.5 ml-2">
+              {/* Card */}
+              <div style={{ ...cardBase }}>
                 {editingIdx === actIdx ? (
-                  <div className="flex gap-1.5 items-center">
-                    <input
-                      type="text"
-                      value={editText}
-                      onChange={e => setEditText(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') saveEdit();
-                        if (e.key === 'Escape') cancelEdit();
-                      }}
-                      className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-[11px] text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-blue-500/50"
-                      autoFocus
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <input type="text" value={editText} onChange={e => setEditText(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                      style={{ ...inputStyle, flex: 1 }} autoFocus
                     />
-                    <button onClick={saveEdit} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all shrink-0"><Check size={13} /></button>
-                    <button onClick={cancelEdit} className="p-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shrink-0"><X size={13} /></button>
-                    <button onClick={() => deleteActivity(actIdx)} className="p-1.5 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-200 dark:hover:bg-orange-800/50 transition-all shrink-0"><Trash2 size={13} /></button>
+                    <button onClick={saveEdit} style={{ padding: '3px 7px', backgroundColor: GREEN, color: '#fff' }}><Check size={10} /></button>
+                    <button onClick={cancelEdit} style={{ padding: '3px 7px', backgroundColor: tc.actBg, color: tc.muted }}><X size={10} /></button>
+                    <button onClick={() => deleteActivity(actIdx)} style={{ padding: '3px 7px', backgroundColor: tc.actBg, color: RED }}><Trash2 size={10} /></button>
                   </div>
                 ) : (
                   <div
-                    className="text-[11px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/40 hover:bg-slate-200 dark:hover:bg-slate-800/70 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700/20 transition-all leading-snug cursor-pointer flex items-start justify-between gap-2"
                     onClick={() => startEdit(actIdx)}
+                    className="cursor-pointer"
+                    style={{
+                      fontSize: '11px', color: tc.text,
+                      backgroundColor: tc.actBg,
+                      border: `1px solid ${tc.actBorder}`,
+                      padding: '5px 10px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
+                    }}
                   >
-                    <span>{evt.text}</span>
-                    <Pencil
-                      size={11}
-                      className="shrink-0 mt-0.5 text-slate-400 dark:text-slate-700 group-hover:text-slate-500 transition-colors"
-                    />
+                    <span style={{ flex: 1 }}>{evt.text}</span>
+                    <Pencil size={9} className="opacity-0 group-hover:opacity-100" style={{ color: tc.muted, flexShrink: 0 }} />
                   </div>
                 )}
               </div>
@@ -517,49 +449,30 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ day, mode, onUpdateActivities
         return null;
       })}
 
-      {/* ── Add activity row ── */}
+      {/* Add activity */}
       {isAdding ? (
-        <div className="flex items-center gap-0 mt-1">
-          <div className="w-14 shrink-0 pr-3">
-            <input
-              type="time"
-              value={newTime}
-              onChange={e => setNewTime(e.target.value)}
-              className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-1.5 py-1 text-[10px] text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-blue-500/50"
-            />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginTop: '4px' }}>
+          <div style={{ width: '50px', flexShrink: 0, paddingRight: '8px' }}>
+            <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ ...inputStyle, width: '42px', fontSize: '9px', padding: '2px 4px' }} />
           </div>
-          <div className="w-5 shrink-0 flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700 ring-2 ring-white dark:ring-slate-900" />
+          <div style={{ width: '20px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+            <div style={{ width: '8px', height: '8px', border: `2px dashed ${TEAL}`, borderRadius: '50%', marginTop: '3px' }} />
           </div>
-          <div className="flex-1 ml-2 flex gap-1.5">
+          <div style={{ flex: 1, marginLeft: '8px', display: 'flex', gap: '4px' }}>
             <input
               ref={addInputRef}
-              type="text"
-              value={newText}
-              onChange={e => setNewText(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') addActivity();
-                if (e.key === 'Escape') { setIsAdding(false); setNewText(''); setNewTime(''); }
-              }}
+              type="text" value={newText} onChange={e => setNewText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') addActivity(); if (e.key === 'Escape') { setIsAdding(false); setNewText(''); setNewTime(''); } }}
               placeholder="Activity description…"
-              className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-[11px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-blue-500/50"
-              autoFocus
+              style={{ ...inputStyle, flex: 1 }} autoFocus
             />
-            <button onClick={addActivity} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all shrink-0"><Check size={13} /></button>
-            <button
-              onClick={() => { setIsAdding(false); setNewText(''); setNewTime(''); }}
-              className="p-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-all shrink-0"
-            >
-              <X size={13} />
-            </button>
+            <button onClick={addActivity} style={{ padding: '4px 8px', backgroundColor: GREEN, color: '#fff' }}><Check size={11} /></button>
+            <button onClick={() => { setIsAdding(false); setNewText(''); setNewTime(''); }} style={{ padding: '4px 8px', backgroundColor: tc.actBg, color: tc.muted }}><X size={11} /></button>
           </div>
         </div>
       ) : (
-        <button
-          onClick={beginAdding}
-          className="flex items-center gap-2 mt-2 ml-[76px] text-[11px] font-bold text-slate-500 dark:text-slate-600 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-        >
-          <Plus size={13} /> Add activity
+        <button onClick={beginAdding} className="font-transit-mono flex items-center gap-1.5" style={{ fontSize: '8px', color: TEAL, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '8px', paddingLeft: '70px' }}>
+          <Plus size={11} /> Add Activity
         </button>
       )}
     </div>
