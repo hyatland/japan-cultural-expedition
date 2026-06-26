@@ -90,7 +90,7 @@ const App: React.FC = () => {
   const [days, setDays] = useState<ItineraryDay[]>(JAPAN_ITINERARY);
   const [companions, setCompanions] = useState<Companion[]>(DEFAULT_COMPANIONS);
   const [selectedDayNum, setSelectedDayNum] = useState<number | null>(JAPAN_ITINERARY[0].dayNum);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [editingDay, setEditingDay] = useState<ItineraryDay | null>(null);
@@ -148,7 +148,7 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1024);
+    const check = () => setIsMobile(window.innerWidth < 900);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
@@ -159,10 +159,7 @@ const App: React.FC = () => {
   const handleDaySelect = (dayNum: number) => {
     setSelectedDayNum(dayNum);
     setSuggestedPois([]);
-    if (isMobile) {
-      setIsSidebarExpanded(false);
-      setIsPanelOpen(true);
-    }
+    if (isMobile) setMobileView('detail');
   };
 
   const handleDragStart = (idx: number) => setDragIdx(idx);
@@ -252,73 +249,48 @@ const App: React.FC = () => {
 
   const PANEL_W = 460;
 
-  return (
-    <div className="flex flex-row h-[100svh] w-full overflow-hidden" style={{ backgroundColor: isDark ? '#0f0f0f' : '#f7f6f3' }}>
-
-      {editingDay && (
-        <EditDayModal day={editingDay} onSave={handleSaveDay} onClose={() => setEditingDay(null)} />
-      )}
-
-      {/* ─── SIDEBAR ─── */}
-      <div
-        className={`shrink-0 flex flex-col h-full overflow-hidden z-40 transition-all duration-300 ${
-          isMobile ? 'fixed inset-x-0 bottom-0 w-full h-[90svh]' : ''
-        }`}
-        style={{
-          width: isMobile ? '100%' : '300px',
-          backgroundColor: sb.bg,
-          transform: isMobile ? (isSidebarExpanded ? 'translateY(0)' : 'translateY(calc(90svh - 100px))') : 'none',
-          transition: 'transform 0.4s ease',
-          borderRight: isMobile ? 'none' : `1px solid ${isDark ? '#222' : '#e0deda'}`,
-        }}
-      >
-        {/* Header */}
-        <div
-          onClick={isMobile ? () => setIsSidebarExpanded(!isSidebarExpanded) : undefined}
-          style={{ backgroundColor: sb.bg, borderBottom: '2px solid #d02810', padding: '14px 28px 12px', flexShrink: 0 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-transit-city" style={{ fontSize: '36px', lineHeight: 1 }}>
-                <span style={{ color: sb.tripMuted }}>TRIP </span>
-                <span style={{ color: sb.tripBold }}>JPN</span>
-              </div>
-              <div className="font-transit-mono mt-1.5" style={{ fontSize: '7px', color: sb.subText, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-                Japan Cultural Expedition · July 2026
-              </div>
+  // ─── Sidebar header + day list (shared between mobile and desktop) ───
+  const renderSidebar = (showMobileBack = false) => (
+    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: sb.bg, width: '100%' }}>
+      {/* Header */}
+      <div style={{ backgroundColor: sb.bg, borderBottom: '2px solid #d02810', padding: '14px 28px 12px', flexShrink: 0 }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-transit-city" style={{ fontSize: '36px', lineHeight: 1 }}>
+              <span style={{ color: sb.tripMuted }}>TRIP </span>
+              <span style={{ color: sb.tripBold }}>JPN</span>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
-                style={{ background: sb.btnBg, borderRadius: '50%', padding: '6px', color: sb.btnColor }}
-              >
-                {isDark ? <Sun size={14} /> : <Moon size={14} />}
-              </button>
-              {isMobile && (
-                <div style={{ background: sb.btnBg, borderRadius: '50%', padding: '6px', color: sb.btnColor }}>
-                  {isSidebarExpanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-                </div>
-              )}
+            <div className="font-transit-mono mt-1.5" style={{ fontSize: '7px', color: sb.subText, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+              Japan Cultural Expedition · July 2026
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              style={{ background: sb.btnBg, borderRadius: '50%', padding: '6px', color: sb.btnColor }}
+            >
+              {isDark ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
+          </div>
         </div>
+      </div>
 
-        {/* Day list */}
-        <div className="flex-1 overflow-y-auto" style={{ backgroundColor: sb.listBg }}>
-          {days.map((day, idx) => {
-            const isActive = selectedDayNum === day.dayNum;
-            const city = cityLabel(day);
-            const dep = day.trainInfo?.departureStation;
-            const arr = day.trainInfo?.arrivalStation;
+      {/* Day list */}
+      <div className="flex-1 overflow-y-auto" style={{ backgroundColor: sb.listBg }}>
+        {days.map((day, idx) => {
+          const isActive = selectedDayNum === day.dayNum;
+          const city = cityLabel(day);
+          const dep = day.trainInfo?.departureStation;
+          const arr = day.trainInfo?.arrivalStation;
 
-            if (isActive) {
-              return (
-                <div
-                  key={`${day.dayNum}-active`}
-                  className="relative cursor-pointer select-none"
-                  style={{ backgroundColor: '#d02810' }}
-                  onClick={() => { if (isMobile) setIsSidebarExpanded(false); setIsPanelOpen(true); }}
-                >
+          if (isActive) {
+            return (
+              <div
+                key={`${day.dayNum}-active`}
+                className="relative cursor-pointer select-none"
+                style={{ backgroundColor: '#d02810' }}
+                onClick={() => { if (isMobile) setMobileView('detail'); }}
+              >
                   <div className="absolute left-0 top-0 bottom-0" style={{ width: '3px', backgroundColor: '#ff5a32' }} />
                   <div style={{ padding: '12px 28px 0 28px' }}>
                     <div className="flex items-center gap-2 mb-0.5">
@@ -421,36 +393,52 @@ const App: React.FC = () => {
               </div>
             );
           })}
-          <div className="h-20 lg:hidden" />
         </div>
       </div>
+  );
 
-      {/* ─── DETAIL PANEL ─── */}
-      <div
-        className="shrink-0 flex flex-col h-full overflow-hidden transition-[width] duration-300 ease-in-out"
-        style={{
-          width: isPanelOpen ? `${PANEL_W}px` : '0px',
-          backgroundColor: cd.bg,
-          borderRight: `1px solid ${cd.border}`,
-          position: isMobile ? 'absolute' : 'relative',
-          ...(isMobile ? { left: 0, top: 0, zIndex: 30 } : {}),
-        }}
-      >
-        {/* Inner content — fixed width so it doesn't squish during animation */}
-        <div style={{ width: `${PANEL_W}px`, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+  // ─── Detail panel content ───
+  const renderDetailPanel = (mobileBack = false) => (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: cd.bg }}>
 
           {/* Panel Header */}
           <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '54px', borderBottom: `1px solid ${cd.rule}`, backgroundColor: cd.sectionBg, flexShrink: 0 }}>
-            {/* Day number */}
-            <div style={{
-              width: '54px', flexShrink: 0,
-              backgroundColor: selectedDay.isHighland ? '#bc9224' : '#d02810',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span className="font-transit-city text-white" style={{ fontSize: '22px', lineHeight: 1 }}>
-                {String(selectedDay.dayNum).padStart(2, '0')}
-              </span>
-            </div>
+            {/* Mobile back button OR day number */}
+            {mobileBack ? (
+              <button
+                onClick={() => setMobileView('list')}
+                style={{
+                  width: '54px', flexShrink: 0,
+                  backgroundColor: isDark ? '#1a1816' : '#0e0e0e',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#888',
+                }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+            ) : (
+              <div style={{
+                width: '54px', flexShrink: 0,
+                backgroundColor: selectedDay.isHighland ? '#bc9224' : '#d02810',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span className="font-transit-city text-white" style={{ fontSize: '22px', lineHeight: 1 }}>
+                  {String(selectedDay.dayNum).padStart(2, '0')}
+                </span>
+              </div>
+            )}
+            {/* Day number badge on mobile (since back btn replaced the number block) */}
+            {mobileBack && (
+              <div style={{
+                width: '44px', flexShrink: 0,
+                backgroundColor: selectedDay.isHighland ? '#bc9224' : '#d02810',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span className="font-transit-city text-white" style={{ fontSize: '18px', lineHeight: 1 }}>
+                  {String(selectedDay.dayNum).padStart(2, '0')}
+                </span>
+              </div>
+            )}
             {/* Date + Title */}
             <div style={{ flex: 1, padding: '7px 14px', minWidth: 0 }}>
               <div className="font-transit-mono" style={{ fontSize: '7px', color: cd.label, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: '1px' }}>
@@ -678,6 +666,43 @@ const App: React.FC = () => {
 
           </div>{/* end scrollable body */}
         </div>
+  );
+
+  // ─── MOBILE: full-screen stacked, no map ───
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-[100svh] w-full overflow-hidden" style={{ backgroundColor: isDark ? '#0f0f0f' : '#f7f6f3' }}>
+        {editingDay && <EditDayModal day={editingDay} onSave={handleSaveDay} onClose={() => setEditingDay(null)} />}
+        {mobileView === 'list'
+          ? renderSidebar(false)
+          : renderDetailPanel(true)
+        }
+      </div>
+    );
+  }
+
+  // ─── DESKTOP: three-column ───
+  return (
+    <div className="flex flex-row h-[100svh] w-full overflow-hidden" style={{ backgroundColor: isDark ? '#0f0f0f' : '#f7f6f3' }}>
+      {editingDay && <EditDayModal day={editingDay} onSave={handleSaveDay} onClose={() => setEditingDay(null)} />}
+
+      {/* Sidebar */}
+      <div className="shrink-0 h-full overflow-hidden" style={{ width: '300px', borderRight: `1px solid ${isDark ? '#222' : '#e0deda'}` }}>
+        {renderSidebar(false)}
+      </div>
+
+      {/* Detail panel */}
+      <div
+        className="shrink-0 flex flex-col h-full overflow-hidden transition-[width] duration-300 ease-in-out"
+        style={{
+          width: isPanelOpen ? `${PANEL_W}px` : '0px',
+          backgroundColor: cd.bg,
+          borderRight: `1px solid ${cd.border}`,
+        }}
+      >
+        <div style={{ width: `${PANEL_W}px`, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {renderDetailPanel(false)}
+        </div>
       </div>
 
       {/* ─── MAP AREA ─── */}
@@ -764,7 +789,7 @@ const App: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+  );  // end desktop return
 };
 
 export default App;
